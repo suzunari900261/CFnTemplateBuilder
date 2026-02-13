@@ -31,4 +31,4 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - run: npx cdk deploy GithubActionsStack --require-approval never
+      - run: npx cdk deploy cdk-portfolio-suzuki-FrontendStack --require-approval never
