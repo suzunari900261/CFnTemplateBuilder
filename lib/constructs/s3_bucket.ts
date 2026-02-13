@@ -1,8 +1,8 @@
-import { RemovalPolicy } from "aws-cdk-lib";
-import { Construct} from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import { Construct} from "constructs";
+import { RemovalPolicy } from "aws-cdk-lib";
 
-export interface S3ConstructProps {
+export interface S3BucketConstructProps {
     bucketName: string;
 }
 
