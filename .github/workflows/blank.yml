@@ -33,7 +33,7 @@ jobs:
 
       - name: Deploy
         run: |
-          npx cdk deploy cdk-portfolio-suzuki-FrontendStack \
+          npx cdk deploy CFnTemplateBuilder-FrontendStack \
             --require-approval never \
             --parameters ProjectName=${{ vars.PROJECT_NAME }} \
             --parameters S3BucketName=${{ vars.S3_BUCKET_NAME }}

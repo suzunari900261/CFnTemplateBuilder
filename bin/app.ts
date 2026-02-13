@@ -9,7 +9,7 @@ const env: cdk.Environment = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 
-new FrontendStack(app, 'cdk-portfolio-suzuki-FrontendStack', {
+new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
   env,
 });
 
