@@ -1,17 +1,17 @@
-// import * as cdk from 'aws-cdk-lib/core';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as CFnTemplateBuilder from '../lib/c_fn_template_builder-stack';
+import * as cdk from 'aws-cdk-lib';
+import { Template } from 'aws-cdk-lib/assertions';
+import { FrontendStack } from '../lib/frontend-stack';
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/c_fn_template_builder-stack.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//     // WHEN
-//   const stack = new CFnTemplateBuilder.CFnTemplateBuilderStack(app, 'MyTestStack');
-//     // THEN
-//   const template = Template.fromStack(stack);
+test('S3 Bucket is created', () => {
+  const app = new cdk.App();
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+  const stack = new FrontendStack(app, 'TestStack', {
+    env: {
+      region: 'ap-northeast-1', // リージョンのみ指定
+    },
+  });
+
+  const template = Template.fromStack(stack);
+
+  template.resourceCountIs('AWS::S3::Bucket', 1);
 });
