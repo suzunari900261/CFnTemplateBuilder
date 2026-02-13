@@ -31,7 +31,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - run: npx cdk deploy cdk-portfolio-suzuki-FrontendStack --require-approval never \
-             --parameters cdk-portfolio-suzuki-FrontendStack:ProjectName=${{ vars.PROJECT_NAME }} \
-             --parameters cdk-portfolio-suzuki-FrontendStack:S3BucketName=${{ vars.S3_BUCKET_NAME }}
-
+      - name: Deploy
+        run: |
+          npx cdk deploy cdk-portfolio-suzuki-FrontendStack \
+            --require-approval never \
+            --parameters ProjectName=${{ vars.PROJECT_NAME }} \
+            --parameters S3BucketName=${{ vars.S3_BUCKET_NAME }}
