@@ -46,7 +46,6 @@ jobs:
     needs: diff
     runs-on: ubuntu-latest
 
-    # ✅ GitHub Environments の承認ゲート（Required reviewers を設定しておく）
     environment: production
 
     steps:
