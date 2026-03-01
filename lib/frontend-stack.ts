@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 
 import { S3BucketConstruct } from "./constructs/s3_bucket";
 import { CloudFrontConstruct} from "./constructs/cloudfront";
@@ -82,15 +83,15 @@ export class FrontendStack extends Stack {
     });
 
     new CfnOutput(this, "CloudFrontDistributionId", {
-      value: cloudFrontConstruct.distribution.distributionId,
+      value: cloudfrontConstruct.distribution.distributionId,
     });
 
     new CfnOutput(this, "CloudFrontDomainName", {
-      value: cloudFrontConstruct.distribution.distributionDomainName,
+      value: cloudfrontConstruct.distribution.distributionDomainName,
     });
 
     new CfnOutput(this, "CloudFrontUrl", {
-      value: `https://${cloudFrontConstruct.distribution.distributionDomainName}`,
+      value: `https://${cloudfrontConstruct.distribution.distributionDomainName}`,
     });
   }
 }
