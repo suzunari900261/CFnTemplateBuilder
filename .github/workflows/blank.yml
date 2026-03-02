@@ -4,70 +4,76 @@ name: CDKDeploy
 on:
   workflow_dispatch: #手動実行
 
-permissions:
-  id-token: write #OIDC用
-  contents: read
+permissions: #権限
+  id-token: write #OIDCトークン(JWT)発行権限
+  contents: read #リポジトリの中身を読み取る権限
 
-#同時デプロイ防止
-concurrency:
-  group: deploy
-  cancel-in-progress: false
+concurrency: #同時デプロイ防止
+  group: deploy #グループ名
+  cancel-in-progress: false #実行中があればキャンセルせず待機
 
-jobs:
-  diff:
-    runs-on: ubuntu-latest
+jobs: #ジョブ確認
+  diff: #CDKのテスト・差分確認ジョブ
+    runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
     steps:
+      #ソースコード取得
       - uses: actions/checkout@v4
 
+      #Node.js環境をセットアップ
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 20 #Node.js version
+          cache: npm #依存関係キャッシュ有効化
 
-      - run: npm ci
+      - run: npm ci #依存パッケージをクリーンインストール
 
-      - name: Build
+      - name: Build #アプリケーションをビルド
         run: npm run build --if-present
 
       - name: Run CDK Tests
-        env:
+        env: #リポジトリ変数
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-        run: npm test
+        run: npm test #テスト実行
 
+      #OIDCを利用しIAMロールを引き受ける
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      #現在のスタックとデプロイ後の差分を表示
       - name: CDK Diff
         env:
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-        run: |
+        run: | #実行コマンド
           npx cdk diff CFnTemplateBuilder-FrontendStack
 
-  deploy:
-    needs: diff
-    runs-on: ubuntu-latest
-    environment: production
+  deploy: #AWS関係へCDKスタックをデプロイするジョブ
+    needs: diff #diffジョブ成功後にのみ実行
+    runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
+    environment: production # GitHubのproduction環境に紐付け(手動承認)
 
     steps:
+      # ソースコードを取得
       - uses: actions/checkout@v4
 
+      #Node.js環境をセットアップ
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: npm #依存関係キャッシュ有効化
 
-      - run: npm ci
+      - run: npm ci #依存パッケージをクリーンインストール
 
-      - name: Build
+      - name: Build #アプリケーションをビルド
         run: npm run build --if-present
 
+      #OIDCを利用しIAMロールを引き受ける
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -75,10 +81,10 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy
-        env:
+        env: #リポジトリ変数
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-        run: |
+        run: | #cdk deploy実行コマンド
           npx cdk deploy CFnTemplateBuilder-FrontendStack \
             --require-approval never
