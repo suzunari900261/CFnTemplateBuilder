@@ -73,14 +73,17 @@ export class FrontendStack extends Stack {
       account: cdk.Stack.of(this).account,
     });
 
+  //CloudFrontDisutributionURLを変数へ格納
+    const cloudFrontUrl = `https://${cloudfrontConstruct.distribution.distributionDomainName}`;
+
     //S3バケットポリシー作成
     s3Construct.grantReadFromCloudFront({
       cloudfrontDistributionArn,
     });
 
     const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
-      callbackUrls: [`${CloudFrontUrl}/callback`],
-      logoutUrls: [`${CloudFrontUrl}/logout`],
+      callbackUrls: [`${cloudFrontUrl}/callback`],
+      logoutUrls: [`${cloudFrontUrl}/logout`],
       cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment.valueAsString}`,
       removalPolicy: RemovalPolicy.RETAIN,
     })
