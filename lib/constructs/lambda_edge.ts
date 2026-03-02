@@ -1,3 +1,4 @@
+import { Construct } from "constructs";
 import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 import { aws_lambda as lambda } from "aws-cdk-lib";
 import * as path from "path";
