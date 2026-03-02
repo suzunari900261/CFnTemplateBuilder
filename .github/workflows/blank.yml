@@ -76,7 +76,7 @@ jobs:
         env:
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
         run: |
           npx cdk deploy CFnTemplateBuilder-FrontendStack \
             --require-approval never
