@@ -2,9 +2,11 @@ import * as cdk from "aws-cdk-lib";
 import { CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
+import { RemovalPolicy } from "aws-cdk-lib";
 
 import { S3BucketConstruct } from "./constructs/s3_bucket";
 import { CloudFrontConstruct} from "./constructs/cloudfront";
+import { CognitoConstruct } from "./constructs/cognito";
 
 export class FrontendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -62,6 +64,7 @@ export class FrontendStack extends Stack {
     }
   );
 
+  //CloudFrontDisutributionArnを変数へ格納
     const cloudfrontDistributionArn = cdk.Stack.of(this).formatArn({
       service: "cloudfront",
       resource: "distribution",
@@ -74,6 +77,13 @@ export class FrontendStack extends Stack {
     s3Construct.grantReadFromCloudFront({
       cloudfrontDistributionArn,
     });
+
+    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
+      callbackUrls: [`${cloudFrontUrl}/callback`],
+      logoutUrls: [`${cloudFrontUrl}/logout`],
+      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment.valueAsString}`,
+      removalPolicy: RemovalPolicy.RETAIN,
+    })
 
     // ------------------------------------------------------------
     // Outputs
@@ -92,6 +102,18 @@ export class FrontendStack extends Stack {
 
     new CfnOutput(this, "CloudFrontUrl", {
       value: `https://${cloudfrontConstruct.distribution.distributionDomainName}`,
+    });
+
+    new CfnOutput(this, "UserPoolId", {
+      value: CognitoResource.userPool.userPoolId,
+    });
+
+    new CfnOutput(this, "UserPoolClientId", {
+      value: CognitoResource.userPoolClient.userPoolClientId,
+    });
+
+    new CfnOutput(this, "IssuerUrl", {
+      value: CognitoResource.issuerUrl
     });
   }
 }
