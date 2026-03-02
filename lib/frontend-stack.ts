@@ -79,8 +79,8 @@ export class FrontendStack extends Stack {
     });
 
     const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
-      callbackUrls: [`${cloudFrontUrl}/callback`],
-      logoutUrls: [`${cloudFrontUrl}/logout`],
+      callbackUrls: [`${CloudFrontUrl}/callback`],
+      logoutUrls: [`${CloudFrontUrl}/logout`],
       cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment.valueAsString}`,
       removalPolicy: RemovalPolicy.RETAIN,
     })
