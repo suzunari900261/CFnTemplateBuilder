@@ -7,6 +7,7 @@ import { RemovalPolicy } from "aws-cdk-lib";
 import { S3BucketConstruct } from "./constructs/s3_bucket";
 import { CloudFrontConstruct} from "./constructs/cloudfront";
 import { CognitoConstruct } from "./constructs/cognito";
+import { EdgeAuthConstruct } from "./constructs/lambda_edge"
 
 export class FrontendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -52,6 +53,9 @@ export class FrontendStack extends Stack {
       bucketName: bucketNameWithEnv,
     });
 
+    //Lambda@Edge関数作成
+    const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth");
+
     //CloudFront作成
     const cloudfrontConstruct = new CloudFrontConstruct(
       this,
@@ -61,6 +65,7 @@ export class FrontendStack extends Stack {
       isSpa: true,
       defaultRootObject: "index.html",
       priceClass: cloudfront.PriceClass.PRICE_CLASS_200, 
+      edgeAuthFunctionVersion: edgeAuth.edgeFn.currentVersion,
     }
   );
 

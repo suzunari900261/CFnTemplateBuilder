@@ -7,6 +7,8 @@ import { //CDK本体ライブラリから各サービスを読み込み
   Duration, //CDKで時間指定(TTL)をするためのユーティリティ
 } from "aws-cdk-lib"; //AWS CDK本体ライブラリ
 
+import { aws_lambda as lambda } from "aws-cdk-lib"; //Lambda関連のクラスをlambdaと言う名前空間で使用
+
 //CloudFrontConstructに渡す設定パラメータ
 export interface CloudFrontConstructProps {
   readonly originBucket: s3.IBucket; //CloudFront配信元S3バケット
@@ -15,6 +17,7 @@ export interface CloudFrontConstructProps {
   readonly isSpa?: boolean; //SPA向け設定
   readonly defaultRootObject?: string; //デフォルトルートオブジェクト
   readonly priceClass?: cloudfront.PriceClass; //CloudFrontの配信エッジの範囲
+  readonly edgeAuthFunctionVersion?: lambda.IVersion; //Lambda@Edgeのversion
 }
 
 //------------------------------------------------------------
@@ -84,6 +87,15 @@ export class CloudFrontConstruct extends Construct {
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED, //CloudFront推奨の最適化キャッシュ
         compress: true, //圧縮転送（gzip/brotli）
         responseHeadersPolicy, //レスポンスにセキュリティヘッダー付与
+
+        edgeLambdas: props.edgeAuthFunctionVersion
+          ? [
+              {
+                functionVersion: oprops.edgeAuthFunctionVersion,
+                eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+              },
+          ]
+        : undefined,
       },
 
       // SPA向けフォールバック設定
