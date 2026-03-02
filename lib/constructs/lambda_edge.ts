@@ -9,7 +9,7 @@ export class EdgeAuthConstruct extends Construct {
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
-        this.edgeFn = new cloudfront.expermental.EdgeFunction(this, "AuthEdgeFn", {
+        this.edgeFn = new cloudfront.experimental.EdgeFunction(this, "AuthEdgeFn", {
             runtime: lambda.Runtime.NODEJS_18_X,
             handler: "index.handler",
             code: lambda.Code.fromAsset(
