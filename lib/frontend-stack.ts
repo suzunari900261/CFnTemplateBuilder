@@ -20,8 +20,8 @@ export class FrontendStack extends Stack {
     const environment = process.env.ENVIRONMENT;
     const s3BucketName = process.env.S3_BUCKET_NAME;
 
-    if (!projectName || !s3BucketName) {
-      throw new Error("Missing env vars: PROJECT_NAME and/or S#_BUCKET_NAME")
+    if (!projectName || !environment || !s3BucketName) {
+      throw new Error("Missing env vars: PROJECT_NAME / ENVIRONMENT / S3_BUCKET_NAME");
     }
 
     // ------------------------------------------------------------
