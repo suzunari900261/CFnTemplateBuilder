@@ -28,6 +28,10 @@ jobs:
         run: npm run build --if-present
 
       - name: Run CDK Tests
+        env:
+          PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
         run: npm test
 
       - name: Configure AWS credentials (OIDC)
