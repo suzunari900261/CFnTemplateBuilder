@@ -36,7 +36,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # EdgeFunction用（us-east-1）bootstrap（初回のみ必要だが、入れておくと安全）
       - name: CDK Bootstrap (ap-northeast-1)
         run: npx cdk bootstrap aws://$AWS_ACCOUNT_ID/ap-northeast-1
         env:
@@ -50,8 +49,8 @@ jobs:
       - name: CDK Diff
         env:
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
-          ENVIRONMENT: ${{ vars.ENVIRONMENT }}   # 例: prod
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}  # 非公開にしたいならsecretsへ
+          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
         run: |
           npx cdk diff CFnTemplateBuilder-FrontendStack
 
