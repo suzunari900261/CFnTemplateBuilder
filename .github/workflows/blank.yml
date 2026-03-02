@@ -1,12 +1,14 @@
+# CDKのデプロイ用ワークフロー
 name: CDKDeploy
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: #手動実行
 
 permissions:
-  id-token: write
+  id-token: write #OIDC用
   contents: read
 
+#同時デプロイ防止
 concurrency:
   group: deploy
   cancel-in-progress: false
