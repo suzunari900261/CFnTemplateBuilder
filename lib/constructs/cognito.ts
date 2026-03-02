@@ -5,6 +5,12 @@ import {
     RemovalPolicy,
 } from "aws-cdk-lib";
 
+import {
+  AwsCustomResource,
+  AwsCustomResourcePolicy,
+  PhysicalResourceId,
+} from "aws-cdk-lib/custom-resources";
+
 export interface CognitoConstructProps {
     readonly callbackUrls: string[];
     readonly logoutUrls: string[];
@@ -73,5 +79,59 @@ export class CognitoConstruct extends Construct {
 
     this.issuerUrl = this.userPool.userPoolProviderUrl;
 
-    }
+  public attachCallbackUrlUpdater(params: {
+    cloudFrontUrl: string; 
+    callbackPath?: string;
+    logoutPath?: string;
+  }): AwsCustomResource {
+    const callbackPath = params.callbackPath ?? "/callback";
+    const logoutPath = params.logoutPath ?? "/logout";
+
+    const callbackUrl = `${params.cloudFrontUrl}${callbackPath}`;
+    const logoutUrl = `${params.cloudFrontUrl}${logoutPath}`;
+
+    const physicalId = PhysicalResourceId.of(
+      `UpdateUserPoolClient-${params.cloudFrontUrl}`
+    );
+
+    return new AwsCustomResource(this, "UpdateCognitoCallbackUrls", {
+      onCreate: {
+        service: "CognitoIdentityServiceProvider",
+        action: "updateUserPoolClient",
+        parameters: {
+          UserPoolId: this.userPool.userPoolId,
+          ClientId: this.userPoolClient.userPoolClientId,
+
+          CallbackURLs: [callbackUrl],
+          LogoutURLs: [logoutUrl],
+
+          AllowedOAuthFlowsUserPoolClient: true,
+          AllowedOAuthFlows: ["code"],
+          AllowedOAuthScopes: ["openid", "email", "profile"],
+          SupportedIdentityProviders: ["COGNITO"],
+        },
+        physicalResourceId: physicalId,
+      },
+      onUpdate: {
+        service: "CognitoIdentityServiceProvider",
+        action: "updateUserPoolClient",
+        parameters: {
+          UserPoolId: this.userPool.userPoolId,
+          ClientId: this.userPoolClient.userPoolClientId,
+
+          CallbackURLs: [callbackUrl],
+          LogoutURLs: [logoutUrl],
+
+          AllowedOAuthFlowsUserPoolClient: true,
+          AllowedOAuthFlows: ["code"],
+          AllowedOAuthScopes: ["openid", "email", "profile"],
+          SupportedIdentityProviders: ["COGNITO"],
+        },
+        physicalResourceId: physicalId,
+      },
+      policy: AwsCustomResourcePolicy.fromSdkCalls({
+        resources: AwsCustomResourcePolicy.ANY_RESOURCE,
+      }),
+    });
+  }
 }
