@@ -13,7 +13,7 @@ export class EdgeAuthConstruct extends Construct {
             runtime: lambda.Runtime.NODEJS_18_X,
             handler: "index.handler",
             code: lambda.Code.fromAsset(
-                path.join(__dirname, "../lambda_edge/edge-auth")
+                path.join(process.cwd(), "lib", "lambda_edge", "edge-auth")
             ),
         });
     }
