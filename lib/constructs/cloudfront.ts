@@ -91,7 +91,7 @@ export class CloudFrontConstruct extends Construct {
         edgeLambdas: props.edgeAuthFunctionVersion
           ? [
               {
-                functionVersion: oprops.edgeAuthFunctionVersion,
+                functionVersion: props.edgeAuthFunctionVersion,
                 eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
               },
           ]
