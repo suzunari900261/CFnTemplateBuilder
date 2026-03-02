@@ -1,5 +1,5 @@
 import * as cdk from "aws-cdk-lib";
-import { CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
+import { CfnOutput, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 import { RemovalPolicy } from "aws-cdk-lib";
@@ -16,37 +16,26 @@ export class FrontendStack extends Stack {
     // ------------------------------------------------------------
     // Parameters
     // ------------------------------------------------------------
-    const projectName = new CfnParameter(this, "ProjectName", {
-      type: "String",
-      description: "Project name for tagging and resource naming",
-    });
+    const projectName = process.env.PROJECT_NAME;
+    const environment = process.env.ENVIRONMENT;
+    const s3BucketName = process.env.S3_BUCKET_NAME;
 
-    const environment = new CfnParameter(this, "Environment", {
-      type: "String",
-      default: "prod",
-      allowedValues: ["dev", "prod"],
-      description: "Deployment environment",
-    });
-
-    const s3BucketName = new CfnParameter(this, "S3BucketName", {
-      type: "String",
-      description: "S3 bucket name for static hosting",
-    });
+    if (!projectName || !s3BucketName) {
+      throw new Error("Missing env vars: PROJECT_NAME and/or S#_BUCKET_NAME")
+    }
 
     // ------------------------------------------------------------
     // Tags
     // ------------------------------------------------------------
-    Tags.of(this).add("Project", projectName.valueAsString);
-    Tags.of(this).add("Env", environment.valueAsString);
+    Tags.of(this).add("Project", projectName);
+    Tags.of(this).add("Env", environment);
 
     // ------------------------------------------------------------
     // Resources
     // ------------------------------------------------------------
 
-    const bucketNameWithEnv = cdk.Fn.join("-",[
-      s3BucketName.valueAsString,
-      environment.valueAsString,
-    ]);
+    //バケット名設定
+    const bucketNameWithEnv = `${s3BucketName}-${environment}`;
 
     //S3バケット作成
     const s3Construct = new S3BucketConstruct(this, "S3frontConstruct", {
@@ -86,10 +75,11 @@ export class FrontendStack extends Stack {
       cloudfrontDistributionArn,
     });
 
+    //Cognito作成
     const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
       callbackUrls: [`${cloudFrontUrl}/callback`],
       logoutUrls: [`${cloudFrontUrl}/logout`],
-      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment.valueAsString}`,
+      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
       removalPolicy: RemovalPolicy.RETAIN,
     })
 
