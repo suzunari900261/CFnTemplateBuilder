@@ -3,6 +3,7 @@ import { CfnOutput, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 import { RemovalPolicy } from "aws-cdk-lib";
+import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from "aws-cdk-lib/custom-resources";
 
 import { S3BucketConstruct } from "./constructs/s3_bucket";
 import { CloudFrontConstruct} from "./constructs/cloudfront";
@@ -34,6 +35,26 @@ export class FrontendStack extends Stack {
     // Resources
     // ------------------------------------------------------------
 
+    //仮URL作成
+    const placeholderBaseUrl = "https://example.invalid";
+
+    //Cognito作成
+    const cognitoRes = new CognitoConstruct(this, "CognitoConstruct", {
+      callbackUrls: [`${placeholderBaseUrl}/callback`],
+      logoutUrls: [`${placeholderBaseUrl}/logout`],
+      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
+
+    //Lambda@Edge関数作成
+    if (!cognitoRes.hostedUiBaseUrl) {
+      throw new Error("hostedUiBaseUrl is undefined. Set cognitoDomainPrefix.");
+    }
+    const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth", {
+      cognitoDomain: cognitoRes.hostedUiBaseUrl,
+      userPoolClientId: cognitoRes.userPoolClient.userPoolClientId,
+}    );
+
     //バケット名設定
     const bucketNameWithEnv = `${s3BucketName}-${environment}`;
 
@@ -41,9 +62,6 @@ export class FrontendStack extends Stack {
     const s3Construct = new S3BucketConstruct(this, "S3frontConstruct", {
       bucketName: bucketNameWithEnv,
     });
-
-    //Lambda@Edge関数作成
-    const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth");
 
     //CloudFront作成
     const cloudfrontConstruct = new CloudFrontConstruct(
@@ -75,13 +93,8 @@ export class FrontendStack extends Stack {
       cloudfrontDistributionArn,
     });
 
-    //Cognito作成
-    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
-      callbackUrls: [`${cloudFrontUrl}/callback`],
-      logoutUrls: [`${cloudFrontUrl}/logout`],
-      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
-      removalPolicy: RemovalPolicy.RETAIN,
-    })
+    //Cognito URL更新処理
+    const updater = cognitoRes.attachCallbackUrlUpdater({ cloudFrontUrl });
 
     // ------------------------------------------------------------
     // Outputs

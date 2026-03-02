@@ -73,6 +73,16 @@ export class CloudFrontConstruct extends Construct {
       props.originBucket
     );
 
+    //Lambda@Edge設定
+    const viewerRequestEdgeLambdas = props.edgeAuthFunctionVersion
+      ? [
+          {
+            functionVersion: props.edgeAuthFunctionVersion,
+            eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+          },
+        ]
+      : undefined;
+
     //CloudFront Distribution作成
     this.distribution = new cloudfront.Distribution(this, "Distribution", {
       defaultRootObject, // "/" へのアクセス時に返すファイル
@@ -87,15 +97,31 @@ export class CloudFrontConstruct extends Construct {
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED, //CloudFront推奨の最適化キャッシュ
         compress: true, //圧縮転送（gzip/brotli）
         responseHeadersPolicy, //レスポンスにセキュリティヘッダー付与
+      　edgeLambdas: viewerRequestEdgeLambdas, //Lambda@Edge設定
+      },
 
-        edgeLambdas: props.edgeAuthFunctionVersion
-          ? [
-              {
-                functionVersion: props.edgeAuthFunctionVersion,
-                eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-              },
-          ]
-        : undefined,
+      //認証ビヘイビア
+      additionalBehaviors: {
+        "/callback": {
+          origin,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          compress: true,
+          responseHeadersPolicy,
+          edgeLambdas: viewerRequestEdgeLambdas,
+        },
+        "/logout": {
+          origin,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          compress: true,
+          responseHeadersPolicy,
+          edgeLambdas: viewerRequestEdgeLambdas,
+        },
       },
 
       // SPA向けフォールバック設定
