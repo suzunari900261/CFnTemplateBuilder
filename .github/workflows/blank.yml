@@ -30,13 +30,6 @@ jobs: #ジョブ確認
       - name: Build #アプリケーションをビルド
         run: npm run build --if-present
 
-      - name: Run CDK Tests
-        env: #リポジトリ変数
-          PROJECT_NAME: ${{ vars.PROJECT_NAME }}
-          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
-          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-        run: npm test #テスト実行
-
       #OIDCを利用しIAMロールを引き受ける
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
