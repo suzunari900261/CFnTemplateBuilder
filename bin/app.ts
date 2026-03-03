@@ -4,17 +4,13 @@ import { FrontendStack } from '../lib/frontend-stack';
 
 const app = new cdk.App();
 
-const account = process.env.CDK_DEFAULT_ACCOUNT;
-const region  = process.env.CDK_DEFAULT_REGION;
+const env: cdk.Environment = {
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: process.env.CDK_DEFAULT_REGION,
+};
 
-if (!account || !region) {
-  throw new Error(
-    `Missing env. account=${account ?? "undefined"}, region=${region ?? "undefined"}`
-  );
-}
-
-new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
-  env: { account, region },
+new FrontendStack(app, 'cdk-portfolio-suzuki-FrontendStack', {
+  env,
   crossRegionReferences: true,
 });
 
