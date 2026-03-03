@@ -4,16 +4,11 @@ import { FrontendStack } from '../lib/frontend-stack';
 
 const app = new cdk.App();
 
-const account = process.env.AWS_ACCOUNT;
-const region = process.env.AWS_REGION;
-
-const env: cdk.Environment = {
-  account,
-  region,
-};
+const account = process.env.CDK_DEFAULT_ACCOUNT;
+const region  = process.env.CDK_DEFAULT_REGION;
 
 new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
-  env,
+  env: { account, region },
   crossRegionReferences: true,
 });
 
