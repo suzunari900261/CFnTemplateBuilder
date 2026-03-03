@@ -46,13 +46,16 @@ export class FrontendStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     });
 
+    const cognitoDomain = CognitoResource.hostedUiBaseUrl;
+    const userPoolClientId = CognitoResource.userPoolClient.userPoolClientI;
+
     //Lambda@Edge関数作成
     if (!CognitoResource.hostedUiBaseUrl) {
       throw new Error("hostedUiBaseUrl is undefined. Set cognitoDomainPrefix.");
     }
     const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth", {
-      cognitoDomain: CognitoResource.hostedUiBaseUrl,
-      userPoolClientId: CognitoResource.userPoolClient.userPoolClientId,
+      cognitoDomain,
+      userPoolClientId,
 }    );
 
     //バケット名設定
