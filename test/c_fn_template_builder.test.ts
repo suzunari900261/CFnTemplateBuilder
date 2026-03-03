@@ -7,7 +7,7 @@ describe("FrontendStack (S3 + CloudFront OAC)", () => {
     const app = new cdk.App();
 
     const stack = new FrontendStack(app, "TestStack", {
-      env: { region: "ap-northeast-1" },
+      env: { account: "111111111111", region: "ap-northeast-1" },
       crossRegionReferences: true,
     });
 
