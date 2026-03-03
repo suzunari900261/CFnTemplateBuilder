@@ -43,6 +43,8 @@ jobs: #ジョブ確認
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
         run: | #実行コマンド
           npx cdk diff CFnTemplateBuilder-FrontendStack
 
