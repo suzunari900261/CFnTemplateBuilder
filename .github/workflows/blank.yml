@@ -37,11 +37,6 @@ jobs: #ジョブ確認
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Set CDK default env
-        run: |
-          echo "CDK_DEFAULT_REGION=${{ vars.AWS_REGION }}" >> $GITHUB_ENV
-          echo "CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
-
       #現在のスタックとデプロイ後の差分を表示
       - name: CDK Diff
         env:
@@ -77,12 +72,6 @@ jobs: #ジョブ確認
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Set CDK default env
-        run: |
-          echo "CDK_DEFAULT_REGION=${{ vars.AWS_REGION }}" >> $GITHUB_ENV
-          echo "CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
-
 
       - name: Deploy
         env: #リポジトリ変数
