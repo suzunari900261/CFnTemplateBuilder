@@ -1,4 +1,5 @@
 import { Construct } from "constructs";
+import { Stack } from "aws-cdk-lib";
 import {
   aws_cognito as cognito,
   Duration,
@@ -22,6 +23,7 @@ export class CognitoConstruct extends Construct {
   public readonly userPool: cognito.UserPool;
   public readonly userPoolClient: cognito.UserPoolClient;
   public readonly issuerUrl: string;
+  public readonly hostedUiBaseUrl?: string;
 
   constructor(scope: Construct, id: string, props: CognitoConstructProps) {
     super(scope, id);
@@ -78,7 +80,10 @@ export class CognitoConstruct extends Construct {
     }
 
     this.issuerUrl = this.userPool.userPoolProviderUrl;
-  } // ★ constructor をここで閉じる
+
+    const region = Stack.of(this).region;
+    this.hostedUiBaseUrl = `https://${props.cognitoDomainPrefix}.auth.${region}.amazoncognito.com`;
+  }
 
   public attachCallbackUrlUpdater(params: {
     cloudFrontUrl: string;
