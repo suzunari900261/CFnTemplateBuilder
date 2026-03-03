@@ -8,6 +8,7 @@ describe("FrontendStack (S3 + CloudFront OAC)", () => {
 
     const stack = new FrontendStack(app, "TestStack", {
       env: { region: "ap-northeast-1" },
+      crossRegionReferences: true,
     });
 
     return Template.fromStack(stack);

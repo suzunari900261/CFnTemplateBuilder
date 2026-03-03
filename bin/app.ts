@@ -11,6 +11,7 @@ const env: cdk.Environment = {
 
 new FrontendStack(app, 'cdk-portfolio-suzuki-FrontendStack', {
   env,
+  crossRegionReferences: true,
 });
 
 app.synth();
