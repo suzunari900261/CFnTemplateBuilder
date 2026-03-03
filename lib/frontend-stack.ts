@@ -39,7 +39,7 @@ export class FrontendStack extends Stack {
     const placeholderBaseUrl = "https://example.invalid";
 
     //Cognito作成
-    const cognitoRes = new CognitoConstruct(this, "CognitoConstruct", {
+    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
       callbackUrls: [`${placeholderBaseUrl}/callback`],
       logoutUrls: [`${placeholderBaseUrl}/logout`],
       cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
@@ -47,12 +47,12 @@ export class FrontendStack extends Stack {
     });
 
     //Lambda@Edge関数作成
-    if (!cognitoRes.hostedUiBaseUrl) {
+    if (!CognitoResource.hostedUiBaseUrl) {
       throw new Error("hostedUiBaseUrl is undefined. Set cognitoDomainPrefix.");
     }
     const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth", {
-      cognitoDomain: cognitoRes.hostedUiBaseUrl,
-      userPoolClientId: cognitoRes.userPoolClient.userPoolClientId,
+      cognitoDomain: CognitoResource.hostedUiBaseUrl,
+      userPoolClientId: CognitoResource.userPoolClient.userPoolClientId,
 }    );
 
     //バケット名設定
@@ -94,7 +94,7 @@ export class FrontendStack extends Stack {
     });
 
     //Cognito URL更新処理
-    const updater = cognitoRes.attachCallbackUrlUpdater({ cloudFrontUrl });
+    const updater = CognitoResource.attachCallbackUrlUpdater({ cloudFrontUrl });
 
     // ------------------------------------------------------------
     // Outputs
