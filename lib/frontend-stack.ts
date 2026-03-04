@@ -34,29 +34,9 @@ export class FrontendStack extends Stack {
     // ------------------------------------------------------------
     // Resources
     // ------------------------------------------------------------
-
-    //仮URL作成
-    const placeholderBaseUrl = "https://example.invalid";
-
-    //Cognito作成
-    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
-      callbackUrls: [`${placeholderBaseUrl}/callback`],
-      logoutUrls: [`${placeholderBaseUrl}/logout`],
-      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
-      removalPolicy: RemovalPolicy.RETAIN,
-    });
-
-    const cognitoDomain = CognitoResource.hostedUiBaseUrl;
-    const userPoolClientId = CognitoResource.userPoolClient.userPoolClientI;
-
-    //Lambda@Edge関数作成
-    if (!CognitoResource.hostedUiBaseUrl) {
-      throw new Error("hostedUiBaseUrl is undefined. Set cognitoDomainPrefix.");
-    }
-    const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth", {
-      cognitoDomain,
-      userPoolClientId,
-}    );
+    
+    //Lambda@Edge作成
+    const edgeAuth = new EdgeAuthConstruct(this, "EdgeAuth");
 
     //バケット名設定
     const bucketNameWithEnv = `${s3BucketName}-${environment}`;
@@ -79,6 +59,9 @@ export class FrontendStack extends Stack {
     }
   );
 
+  //CloudFrontDisutributionURLを変数へ格納
+    const cloudFrontUrl = `https://${cloudfrontConstruct.distribution.distributionDomainName}`;
+
   //CloudFrontDisutributionArnを変数へ格納
     const cloudfrontDistributionArn = cdk.Stack.of(this).formatArn({
       service: "cloudfront",
@@ -88,16 +71,18 @@ export class FrontendStack extends Stack {
       account: cdk.Stack.of(this).account,
     });
 
-  //CloudFrontDisutributionURLを変数へ格納
-    const cloudFrontUrl = `https://${cloudfrontConstruct.distribution.distributionDomainName}`;
-
     //S3バケットポリシー作成
     s3Construct.grantReadFromCloudFront({
       cloudfrontDistributionArn,
     });
 
-    //Cognito URL更新処理
-    const updater = CognitoResource.attachCallbackUrlUpdater({ cloudFrontUrl });
+    //Cognito作成
+    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
+      callbackUrls: [`${cloudFrontUrl}/callback`],
+      logoutUrls: [`${cloudFrontUrl}/logout`],
+      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
 
     // ------------------------------------------------------------
     // Outputs
