@@ -2,7 +2,6 @@ import { Construct } from "constructs";
 import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 import { aws_lambda as lambda } from "aws-cdk-lib";
 import * as path from "path";
-import * as fs from "fs";
 
 export interface EdgeAuthConstructProps {
   readonly cognitoDomain: string;
@@ -23,7 +22,7 @@ export class EdgeAuthConstruct extends Construct {
       .replace(/"__CLIENT_ID__"/g, JSON.stringify(props.userPoolClientId));
 
     this.edgeFn = new cloudfront.experimental.EdgeFunction(this, "AuthEdgeFn", {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_20_X,
       handler: "index.handler",
       code: lambda.Code.fromInline(inlined),
     });
