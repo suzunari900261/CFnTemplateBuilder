@@ -84,20 +84,4 @@ export class CognitoConstruct extends Construct {
     const region = Stack.of(this).region;
     this.hostedUiBaseUrl = `https://${props.cognitoDomainPrefix}.auth.${region}.amazoncognito.com`;
   }
-
-  public attachCallbackUrlUpdater(params: {
-    cloudFrontUrl: string;
-    callbackPath?: string;
-    logoutPath?: string;
-  }): AwsCustomResource {
-    const callbackPath = params.callbackPath ?? "/callback";
-    const logoutPath = params.logoutPath ?? "/logout";
-
-    const callbackUrl = `${params.cloudFrontUrl}${callbackPath}`;
-    const logoutUrl = `${params.cloudFrontUrl}${logoutPath}`;
-
-    const physicalId = PhysicalResourceId.of(
-      `UpdateUserPoolClient-${params.cloudFrontUrl}`
-    );
-  }
 }
