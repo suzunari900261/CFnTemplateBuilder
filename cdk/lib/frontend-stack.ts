@@ -69,8 +69,11 @@ export class FrontendStack extends Stack {
       cloudfrontDistributionArn,
     });
 
+    const userpoolNameWithEnv = `${projectName}-userpool-${environment}`;
+
     //Cognito作成
     const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
+      userPoolName: userpoolNameWithEnv,
       callbackUrls: [`${cloudFrontUrl}/callback`],
       logoutUrls: [`${cloudFrontUrl}/logout`],
       cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
