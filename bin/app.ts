@@ -11,7 +11,6 @@ const env: cdk.Environment = {
 
 new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
   env,
-  crossRegionReferences: true,
 });
 
 app.synth();

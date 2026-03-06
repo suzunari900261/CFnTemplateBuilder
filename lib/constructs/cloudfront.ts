@@ -7,8 +7,6 @@ import { //CDK本体ライブラリから各サービスを読み込み
   Duration, //CDKで時間指定(TTL)をするためのユーティリティ
 } from "aws-cdk-lib"; //AWS CDK本体ライブラリ
 
-import { aws_lambda as lambda } from "aws-cdk-lib"; //Lambda関連のクラスをlambdaと言う名前空間で使用
-
 //CloudFrontConstructに渡す設定パラメータ
 export interface CloudFrontConstructProps {
   readonly originBucket: s3.IBucket; //CloudFront配信元S3バケット
@@ -17,7 +15,6 @@ export interface CloudFrontConstructProps {
   readonly isSpa?: boolean; //SPA向け設定
   readonly defaultRootObject?: string; //デフォルトルートオブジェクト
   readonly priceClass?: cloudfront.PriceClass; //CloudFrontの配信エッジの範囲
-  readonly edgeAuthFunctionVersion?: lambda.IVersion; //Lambda@Edgeのversion
 }
 
 //------------------------------------------------------------
@@ -73,16 +70,6 @@ export class CloudFrontConstruct extends Construct {
       props.originBucket
     );
 
-    //Lambda@Edge設定
-    const viewerRequestEdgeLambdas = props.edgeAuthFunctionVersion
-      ? [
-          {
-            functionVersion: props.edgeAuthFunctionVersion,
-            eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
-          },
-        ]
-      : undefined;
-
     //CloudFront Distribution作成
     this.distribution = new cloudfront.Distribution(this, "Distribution", {
       defaultRootObject, // "/" へのアクセス時に返すファイル
@@ -97,31 +84,6 @@ export class CloudFrontConstruct extends Construct {
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED, //CloudFront推奨の最適化キャッシュ
         compress: true, //圧縮転送（gzip/brotli）
         responseHeadersPolicy, //レスポンスにセキュリティヘッダー付与
-      　edgeLambdas: viewerRequestEdgeLambdas, //Lambda@Edge設定
-      },
-
-      //認証ビヘイビア
-      additionalBehaviors: {
-        "/callback": {
-          origin,
-          viewerProtocolPolicy:
-            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-          compress: true,
-          responseHeadersPolicy,
-          edgeLambdas: viewerRequestEdgeLambdas,
-        },
-        "/logout": {
-          origin,
-          viewerProtocolPolicy:
-            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-          compress: true,
-          responseHeadersPolicy,
-          edgeLambdas: viewerRequestEdgeLambdas,
-        },
       },
 
       // SPA向けフォールバック設定
