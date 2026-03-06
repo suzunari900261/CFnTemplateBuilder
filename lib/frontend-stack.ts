@@ -24,18 +24,15 @@ export class FrontendStack extends Stack {
     // ------------------------------------------------------------
     // Tags
     // ------------------------------------------------------------
-    Tags.of(this).add("Project", projectName.valueAsString);
-    Tags.of(this).add("Env", environment.valueAsString);
+    Tags.of(this).add("Project", projectName);
+    Tags.of(this).add("Env", environment);
 
     // ------------------------------------------------------------
     // Resources
     // ------------------------------------------------------------
 
-    //S3バケット名作成
-    const bucketNameWithEnv = cdk.Fn.join("-",[
-      s3BucketName.valueAsString,
-      environment.valueAsString,
-    ]);
+    //バケット名設定
+    const bucketNameWithEnv = `${s3BucketName}-${environment}`;
 
     //S3バケット作成
     const s3Construct = new S3BucketConstruct(this, "S3frontConstruct", {
