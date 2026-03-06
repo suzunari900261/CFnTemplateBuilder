@@ -40,6 +40,7 @@ export class FrontendStack extends Stack {
     // Resources
     // ------------------------------------------------------------
 
+    //S3バケット名作成
     const bucketNameWithEnv = cdk.Fn.join("-",[
       s3BucketName.valueAsString,
       environment.valueAsString,
@@ -62,6 +63,7 @@ export class FrontendStack extends Stack {
     }
   );
 
+  //CloudFrontArn格納
     const cloudfrontDistributionArn = cdk.Stack.of(this).formatArn({
       service: "cloudfront",
       resource: "distribution",
