@@ -67,6 +67,6 @@ jobs:
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
         run: |
-          aws s3 sync dist/ s3://$S3_BUCKET_NAME/ \
+          aws s3 sync dist/ s3://$S3_BUCKET_NAME-$ENVIRONMENT/ \
             --delete \
             --cache-control "max-age=31536000,public"
