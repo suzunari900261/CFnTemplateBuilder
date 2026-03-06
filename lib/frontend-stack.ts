@@ -13,22 +13,13 @@ export class FrontendStack extends Stack {
     // ------------------------------------------------------------
     // Parameters
     // ------------------------------------------------------------
-    const projectName = new CfnParameter(this, "ProjectName", {
-      type: "String",
-      description: "Project name for tagging and resource naming",
-    });
+    const projectName = process.env.PROJECT_NAME;
+    const environment = process.env.ENVIRONMENT;
+    const s3BucketName = process.env.S3_BUCKET_NAME;
 
-    const environment = new CfnParameter(this, "Environment", {
-      type: "String",
-      default: "prod",
-      allowedValues: ["dev", "prod"],
-      description: "Deployment environment",
-    });
-
-    const s3BucketName = new CfnParameter(this, "S3BucketName", {
-      type: "String",
-      description: "S3 bucket name for static hosting",
-    });
+    if (!projectName || !environment || !s3BucketName) {
+      throw new Error("Missing env vars: PROJECT_NAME / ENVIRONMENT / S3_BUCKET_NAME");
+    }
 
     // ------------------------------------------------------------
     // Tags
