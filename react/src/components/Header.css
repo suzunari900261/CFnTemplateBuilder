@@ -1,0 +1,96 @@
+.site-header {
+  background-color: #232f3e;
+  color: #fff;
+  padding: 0 24px;
+  min-height: 98px;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.site-header img {
+  width: 50px;
+  height: 50px;
+}
+
+.site-header button {
+  width: 100px;
+  height: 50px;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 600;
+
+  color: #fff;
+  background-color: #4682B4;
+
+  border: none;
+  border-radius: 4px;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.site-header button:hover {
+  background-color: #3A6D99;
+}
+
+.site-header button:active {
+  background-color: #2F5C80;
+  transform: scale(0.97);
+}
+
+.header-components {
+  display: flex;
+  align-items: stretch;
+  min-height: 98px;
+  gap: 0;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.header-menu {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-title {
+  flex: 1;
+  min-width: 300px;
+}
+
+.header-actions {
+  flex: 0 0 auto;
+  gap: 12px;
+}
+
+.header-loginstatus {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  max-width: 160px;
+  min-width: 75px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+}
+
+.header-login {
+  flex: 0 0 auto;
+  border-right: none;
+  padding-right: 0;
+}
