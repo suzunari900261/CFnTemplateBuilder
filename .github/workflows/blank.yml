@@ -17,7 +17,7 @@ jobs: #ジョブ確認
     runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
     defaults:
       run:
-        working-directory: cdk #/cdkディレクリ内
+        working-directory: cdk #/cdkディレクトリ内
     steps:
       #ソースコード取得
       - uses: actions/checkout@v4
@@ -27,6 +27,7 @@ jobs: #ジョブ確認
         with:
           node-version: 20 #Node.js version
           cache: npm #依存関係キャッシュ有効化
+          cache-dependency-path: cdk/package-lock.json
 
       - run: npm ci #依存パッケージをクリーンインストール
 
@@ -46,19 +47,19 @@ jobs: #ジョブ確認
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-        run: | #実行コマンド
+        run: |
           npx cdk diff CFnTemplateBuilder-FrontendStack
 
   deploy: #AWS関係へCDKスタックをデプロイするジョブ
     needs: diff #diffジョブ成功後にのみ実行
     runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
-    environment: production # GitHubのproduction環境に紐付け(手動承認)
+    environment: production #GitHubのproduction環境に紐付け(手動承認)
     defaults:
       run:
-        working-directory: cdk #/cdkディレクリ内
+        working-directory: cdk #/cdkディレクトリ内
 
     steps:
-      # ソースコードを取得
+      #ソースコードを取得
       - uses: actions/checkout@v4
 
       #Node.js環境をセットアップ
@@ -66,6 +67,7 @@ jobs: #ジョブ確認
         with:
           node-version: 20
           cache: npm #依存関係キャッシュ有効化
+          cache-dependency-path: cdk/package-lock.json
 
       - run: npm ci #依存パッケージをクリーンインストール
 
@@ -84,6 +86,6 @@ jobs: #ジョブ確認
           PROJECT_NAME: ${{ vars.PROJECT_NAME }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
           S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-        run: | #cdk deploy実行コマンド
+        run: |
           npx cdk deploy CFnTemplateBuilder-FrontendStack \
             --require-approval never
