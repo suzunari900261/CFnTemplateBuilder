@@ -5,6 +5,7 @@ export interface CognitoConstructProps {
   readonly callbackUrls: string[];
   readonly logoutUrls?: string[];
   readonly cognitoDomainPrefix: string;
+  readonly userPoolName: string;
 }
 
 export class CognitoConstruct extends Construct {
@@ -17,6 +18,7 @@ export class CognitoConstruct extends Construct {
     super(scope, id);
 
     this.userPool = new cognito.UserPool(this, "UserPool", {
+      userPoolName: props.userPoolName,
       selfSignUpEnabled: true,
       autoVerify: { email: true },
       standardAttributes: {
