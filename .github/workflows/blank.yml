@@ -15,6 +15,9 @@ concurrency: #同時デプロイ防止
 jobs: #ジョブ確認
   diff: #CDKのテスト・差分確認ジョブ
     runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
+    defaults:
+      run:
+        working-directory: cdk #/cdkディレクリ内
     steps:
       #ソースコード取得
       - uses: actions/checkout@v4
@@ -50,6 +53,9 @@ jobs: #ジョブ確認
     needs: diff #diffジョブ成功後にのみ実行
     runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
     environment: production # GitHubのproduction環境に紐付け(手動承認)
+    defaults:
+      run:
+        working-directory: cdk #/cdkディレクリ内
 
     steps:
       # ソースコードを取得
