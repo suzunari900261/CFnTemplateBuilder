@@ -5,6 +5,7 @@ import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 
 import { S3BucketConstruct } from "./constructs/s3_bucket";
 import { CloudFrontConstruct} from "./constructs/cloudfront";
+import { CognitoConstruct } from "./constructs/cognito";
 
 export class FrontendStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -35,53 +36,75 @@ export class FrontendStack extends Stack {
     const bucketNameWithEnv = `${s3BucketName}-${environment}`;
 
     //S3バケット作成
-    const s3Construct = new S3BucketConstruct(this, "S3frontConstruct", {
+    const s3Resource = new S3BucketConstruct(this, "S3frontConstruct", {
       bucketName: bucketNameWithEnv,
     });
 
     //CloudFront作成
-    const cloudfrontConstruct = new CloudFrontConstruct(
+    const cloudfrontResource = new CloudFrontConstruct(
       this,
       "CloudFrontConstruct", 
     {
-      originBucket: s3Construct.bucket,
+      originBucket: s3Resource.bucket,
       isSpa: true,
       defaultRootObject: "index.html",
       priceClass: cloudfront.PriceClass.PRICE_CLASS_200, 
     }
   );
 
+  //CloudFrontDisutributionURLを変数へ格納
+    const cloudFrontUrl = `https://${cloudfrontResource.distribution.distributionDomainName}`;
+
   //CloudFrontArn格納
     const cloudfrontDistributionArn = cdk.Stack.of(this).formatArn({
       service: "cloudfront",
       resource: "distribution",
-      resourceName: cloudfrontConstruct.distribution.distributionId,
+      resourceName: cloudfrontResource.distribution.distributionId,
       region: "",
       account: cdk.Stack.of(this).account,
     });
 
     //S3バケットポリシー作成
-    s3Construct.grantReadFromCloudFront({
+    s3Resource.grantReadFromCloudFront({
       cloudfrontDistributionArn,
+    });
+
+    //Cognito作成
+    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
+      callbackUrls: [`${cloudFrontUrl}/callback`],
+      logoutUrls: [`${cloudFrontUrl}/logout`],
+      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
     });
 
     // ------------------------------------------------------------
     // Outputs
     // ------------------------------------------------------------
     new CfnOutput(this, "S3BucketNameOutput", {
-      value: s3Construct.bucket.bucketName,
+      value: s3Resource.bucket.bucketName,
     });
 
     new CfnOutput(this, "CloudFrontDistributionId", {
-      value: cloudfrontConstruct.distribution.distributionId,
+      value: cloudfrontResource.distribution.distributionId,
     });
 
     new CfnOutput(this, "CloudFrontDomainName", {
-      value: cloudfrontConstruct.distribution.distributionDomainName,
+      value: cloudfrontResource.distribution.distributionDomainName,
     });
 
     new CfnOutput(this, "CloudFrontUrl", {
-      value: `https://${cloudfrontConstruct.distribution.distributionDomainName}`,
+      value: `https://${cloudfrontResource.distribution.distributionDomainName}`,
+    });
+
+    new CfnOutput(this, "UserPoolId", {
+      value: CognitoResource.userPool.userPoolId,
+    });
+
+    new CfnOutput(this, "UserPoolClientId", {
+      value: CognitoResource.userPoolClient.userPoolClientId,
+    });
+
+    new CfnOutput(this, "IssuerUrl", {
+      value: CognitoResource.issuerUrl
     });
   }
 }
