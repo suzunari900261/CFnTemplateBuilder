@@ -13,7 +13,7 @@ export default function App() {
     `${domain}/login?client_id=${clientId}` +
     `&response_type=code` +
     `&scope=email+openid+profile` +
-    `redirect_uri=${encodeURIComponent(redirectUri)}`
+    `&redirect_uri=${encodeURIComponent(redirectUri)}`
 
     window.location.href = loginUrl
 
