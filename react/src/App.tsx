@@ -1,23 +1,14 @@
 import Header from './components/Header'
+import { redirectToLogin } from './auth/cognito'
 
 import './App.css'
 import './components/Header.css'
 
 export default function App() {
-  const handleLogin = () => {
-    const domain = "https://cfn-templatebuilder-auth-prod.auth.ap-northeast-1.amazoncognito.com"
-    const clientId = "3c67r2of3b5b6tjkqq4tf8m9ls"
-    const redirectUri = "https://d2nn37041udeen.cloudfront.net/callback"
-
-    const loginUrl =
-    `${domain}/login?client_id=${clientId}` +
-    `&response_type=code` +
-    `&scope=openid+email+profile` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}`
-
-    window.location.href = loginUrl
-
+  const handleLogin = async () => {
+    await redirectToLogin()
   }
+
   return (
     <>
       <Header
@@ -26,9 +17,7 @@ export default function App() {
       />
 
       <main>
-        <p className="note">
-          テスト
-        </p>
+        <p className="note">テスト</p>
       </main>
     </>
   )
