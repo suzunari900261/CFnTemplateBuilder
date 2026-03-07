@@ -5,6 +5,7 @@ import {
   getStoredAccessToken,
   fetchUserInfo,
   clearStoredAuth,
+  redirectToLogout,
 } from './auth/cognito'
 
 import './App.css'
@@ -54,9 +55,7 @@ export default function App() {
   }
 
   const handleLogout = () => {
-    clearStoredAuth()
-    setIsAuthenticated(false)
-    setUsername('Guest')
+    redirectToLogout()
   }
 
   return (
