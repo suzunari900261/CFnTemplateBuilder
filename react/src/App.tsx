@@ -12,8 +12,8 @@ export default function App() {
     const loginUrl =
     `${domain}/login?client_id=${clientId}` +
     `&response_type=code` +
-    `&scope=email+openid+profile` +
-    `redirect_uri=${encodeURIComponent(redirectUri)}`
+    `&scope=openid+email+profile` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}`
 
     window.location.href = loginUrl
 
