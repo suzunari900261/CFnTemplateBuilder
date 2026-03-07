@@ -31,6 +31,9 @@ export default function Callback() {
           sessionStorage.setItem('refresh_token', tokenResponse.refresh_token)
         }
 
+        sessionStorage.removeItem('cognito_oauth_state')
+        sessionStorage.removeItem('cognito_code_verifier')
+
         setMessage('ログイン成功')
         window.location.replace('/')
       } catch (e) {
