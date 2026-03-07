@@ -17,7 +17,7 @@ export default function App() {
       />
 
       <main>
-        <p className="note">テスト</p>
+        <p className="note">テスト01</p>
       </main>
     </>
   )
