@@ -5,10 +5,19 @@ import './Header.css'
 
 type HeaderProps = {
   title: string
+  username: string
+  isAuthenticated: boolean
   onLoginClick: () => void
+  onLogoutClick: () => void
 }
 
-export default function Header({ title, onLoginClick }: HeaderProps) {
+export default function Header({
+  title,
+  username,
+  isAuthenticated,
+  onLoginClick,
+  onLogoutClick,
+}: HeaderProps) {
   return (
     <header className="site-header">
       <div className="header-components">
@@ -26,13 +35,15 @@ export default function Header({ title, onLoginClick }: HeaderProps) {
         </div>
 
         <div className="header-container header-loginstatus">
-          <p>Guest</p>
+          <p>{username}</p>
         </div>
 
         <div className="header-container header-login">
-          <button onClick={onLoginClick}>
-            ログイン
-          </button>
+          {isAuthenticated ? (
+            <button onClick={onLogoutClick}>ログアウト</button>
+          ) : (
+            <button onClick={onLoginClick}>ログイン</button>
+          )}
         </div>
       </div>
     </header>

@@ -67,3 +67,36 @@ export function validateState(returnedState: string | null): void {
     throw new Error('state 不一致です。')
   }
 }
+
+export function getStoredAccessToken(): string | null {
+  return sessionStorage.getItem('access_token')
+}
+
+export function clearStoredAuth(): void {
+  sessionStorage.removeItem('id_token')
+  sessionStorage.removeItem('access_token')
+  sessionStorage.removeItem('refresh_token')
+  sessionStorage.removeItem('cognito_oauth_state')
+  sessionStorage.removeItem('cognito_code_verifier')
+}
+
+export async function fetchUserInfo(accessToken: string): Promise<{
+  sub: string
+  email?: string
+  preferred_username?: string
+  username?: string
+}> {
+  const response = await fetch(`${cognitoDomain}/oauth2/userInfo`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`userInfo取得失敗: ${response.status} ${errorText}`)
+  }
+
+  return response.json()
+}
