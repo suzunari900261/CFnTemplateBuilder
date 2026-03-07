@@ -5,9 +5,10 @@ import './Header.css'
 
 type HeaderProps = {
   title: string
+  onLoginClick: () => void
 }
 
-export default function Header({ title }: HeaderProps) {
+export default function Header({ title, onLoginClick }: HeaderProps) {
   return (
     <header className="site-header">
       <div className="header-components">
@@ -29,7 +30,9 @@ export default function Header({ title }: HeaderProps) {
         </div>
 
         <div className="header-container header-login">
-          <button>ログイン</button>
+          <button onClick={onLoginClick}>
+            ログイン
+          </button>
         </div>
       </div>
     </header>
