@@ -3,6 +3,7 @@ import { generatePkcePair } from './pkce'
 const cognitoDomain = 'https://cfn-templatebuilder-auth-prod.auth.ap-northeast-1.amazoncognito.com'
 const clientId = '3c67r2of3b5b6tjkqq4tf8m9ls'
 const redirectUri = 'https://d2nn37041udeen.cloudfront.net/callback'
+const logoutUri = 'https://d2nn37041udeen.cloudfront.net/'
 const scopes = ['openid', 'email', 'profile']
 
 function generateState(): string {
@@ -99,4 +100,15 @@ export async function fetchUserInfo(accessToken: string): Promise<{
   }
 
   return response.json()
+}
+
+export function redirectToLogout(): void {
+  clearStoredAuth()
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    logout_uri: logoutUri,
+  })
+
+  window.location.assign(`${cognitoDomain}/logout?${params.toString()}`)
 }
