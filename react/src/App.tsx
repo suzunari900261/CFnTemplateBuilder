@@ -6,6 +6,7 @@ import {
   fetchUserInfo,
   clearStoredAuth,
   redirectToLogout,
+  subscribeAuthState,
 } from './auth/cognito'
 
 import './App.css'
@@ -48,6 +49,13 @@ export default function App() {
     }
 
     void initializeAuth()
+
+    const unsubscribe = subscribeAuthState(() => {
+      setIsAuthLoading(true)
+      void initializeAuth()
+    })
+
+    return unsubscribe
   }, [])
 
   const handleLogin = async () => {
@@ -69,7 +77,7 @@ export default function App() {
       />
 
       <main>
-        <p className="note">テスト01</p>
+        <p className="note">テスト02</p>
       </main>
     </>
   )

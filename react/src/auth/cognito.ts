@@ -1,19 +1,61 @@
 import { generatePkcePair } from './pkce'
 
-const cognitoDomain = 'https://cfn-templatebuilder-auth-prod.auth.ap-northeast-1.amazoncognito.com'
+const cognitoDomain =
+  'https://cfn-templatebuilder-auth-prod.auth.ap-northeast-1.amazoncognito.com'
 const clientId = '3c67r2of3b5b6tjkqq4tf8m9ls'
 const redirectUri = 'https://d2nn37041udeen.cloudfront.net/callback'
 const logoutUri = 'https://d2nn37041udeen.cloudfront.net/'
 const scopes = ['openid', 'email', 'profile']
 
+const AUTH_STATE_EVENT = 'auth-state-changed'
+
+type TokenResponse = {
+  access_token: string
+  id_token: string
+  refresh_token?: string
+  expires_in?: number
+  token_type?: string
+}
+
+export type AuthState = {
+  isAuthenticated: boolean
+  accessToken: string | null
+  idToken: string | null
+  refreshToken: string | null
+}
+
+const authState: AuthState = {
+  isAuthenticated: false,
+  accessToken: null,
+  idToken: null,
+  refreshToken: null,
+}
+
+function emitAuthStateChanged(): void {
+  window.dispatchEvent(new Event(AUTH_STATE_EVENT))
+}
+
 function generateState(): string {
   return crypto.randomUUID()
+}
+
+export function getAuthState(): AuthState {
+  return { ...authState }
+}
+
+export function subscribeAuthState(listener: () => void): () => void {
+  window.addEventListener(AUTH_STATE_EVENT, listener)
+
+  return () => {
+    window.removeEventListener(AUTH_STATE_EVENT, listener)
+  }
 }
 
 export async function redirectToLogin(): Promise<void> {
   const state = generateState()
   const { codeVerifier, codeChallenge } = await generatePkcePair()
 
+  // OAuthリダイレクトをまたぐため、ここだけ sessionStorage を使う
   sessionStorage.setItem('cognito_oauth_state', state)
   sessionStorage.setItem('cognito_code_verifier', codeVerifier)
 
@@ -30,7 +72,7 @@ export async function redirectToLogin(): Promise<void> {
   window.location.assign(`${cognitoDomain}/oauth2/authorize?${params.toString()}`)
 }
 
-export async function exchangeCodeForToken(code: string): Promise<any> {
+export async function exchangeCodeForToken(code: string): Promise<TokenResponse> {
   const codeVerifier = sessionStorage.getItem('cognito_code_verifier')
 
   if (!codeVerifier) {
@@ -58,7 +100,7 @@ export async function exchangeCodeForToken(code: string): Promise<any> {
     throw new Error(`トークン取得失敗: ${response.status} ${errorText}`)
   }
 
-  return response.json()
+  return (await response.json()) as TokenResponse
 }
 
 export function validateState(returnedState: string | null): void {
@@ -69,16 +111,32 @@ export function validateState(returnedState: string | null): void {
   }
 }
 
+export function setAuthTokens(tokens: TokenResponse): void {
+  authState.accessToken = tokens.access_token
+  authState.idToken = tokens.id_token
+  authState.refreshToken = tokens.refresh_token ?? null
+  authState.isAuthenticated = true
+
+  sessionStorage.removeItem('cognito_oauth_state')
+  sessionStorage.removeItem('cognito_code_verifier')
+
+  emitAuthStateChanged()
+}
+
 export function getStoredAccessToken(): string | null {
-  return sessionStorage.getItem('access_token')
+  return authState.accessToken
 }
 
 export function clearStoredAuth(): void {
-  sessionStorage.removeItem('id_token')
-  sessionStorage.removeItem('access_token')
-  sessionStorage.removeItem('refresh_token')
+  authState.accessToken = null
+  authState.idToken = null
+  authState.refreshToken = null
+  authState.isAuthenticated = false
+
   sessionStorage.removeItem('cognito_oauth_state')
   sessionStorage.removeItem('cognito_code_verifier')
+
+  emitAuthStateChanged()
 }
 
 export async function fetchUserInfo(accessToken: string): Promise<{
@@ -99,7 +157,12 @@ export async function fetchUserInfo(accessToken: string): Promise<{
     throw new Error(`userInfo取得失敗: ${response.status} ${errorText}`)
   }
 
-  return response.json()
+  return (await response.json()) as {
+    sub: string
+    email?: string
+    preferred_username?: string
+    username?: string
+  }
 }
 
 export function redirectToLogout(): void {
