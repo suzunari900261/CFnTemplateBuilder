@@ -44,12 +44,18 @@ export class CognitoConstruct extends Construct {
       },
     });
 
-    this.userPool.addDomain("HostedUiDomain", {
+    const domain = this.userPool.addDomain("HostedUiDomain", {
       cognitoDomain: {
         domainPrefix: props.cognitoDomainPrefix,
       },
       managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN,
     });
+
+    new cognito.CfnManagedLoginBranding(this, "ManagedLoginBranding", {
+      userPoolId: this.userPool.userPoolId,
+      clientId: this.userPoolClient.userPoolClientId,
+      useCognitoProvidedValues: true,
+    }).addDependency(domain.node.defaultChild as cognito.CfnUserPoolDomain);
 
     const region = Stack.of(this).region;
     this.hostedUiBaseUrl = `https://${props.cognitoDomainPrefix}.auth.${region}.amazoncognito.com`;
