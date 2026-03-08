@@ -32,8 +32,8 @@ export default function App() {
         const userInfo = await fetchUserInfo(accessToken)
         const displayName =
           userInfo.preferred_username ||
-          userInfo.email ||
           userInfo.username ||
+          userInfo.email ||
           'Authenticated User'
 
         setIsAuthenticated(true)
