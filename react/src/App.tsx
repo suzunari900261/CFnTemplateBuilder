@@ -64,6 +64,7 @@ export default function App() {
 
   const handleLogout = () => {
     logout()
+    alert('ログアウトが完了しました')
   }
 
   return (
