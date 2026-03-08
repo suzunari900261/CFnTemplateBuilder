@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { exchangeCodeForToken, validateState } from './auth/cognito'
+import { exchangeCodeForToken, setAuthTokens, validateState } from './auth/cognito'
 
 export default function Callback() {
   const [message, setMessage] = useState('ログイン処理中...')
@@ -23,19 +23,13 @@ export default function Callback() {
         validateState(state)
 
         const tokenResponse = await exchangeCodeForToken(code)
-
-        sessionStorage.setItem('id_token', tokenResponse.id_token)
-        sessionStorage.setItem('access_token', tokenResponse.access_token)
-
-        if (tokenResponse.refresh_token) {
-          sessionStorage.setItem('refresh_token', tokenResponse.refresh_token)
-        }
-
-        sessionStorage.removeItem('cognito_oauth_state')
-        sessionStorage.removeItem('cognito_code_verifier')
+        setAuthTokens(tokenResponse)
 
         setMessage('ログイン成功')
-        window.location.replace('/')
+
+        window.history.replaceState({}, '', '/')
+
+        window.dispatchEvent(new PopStateEvent('popstate'))
       } catch (e) {
         setMessage(e instanceof Error ? e.message : 'ログインに失敗しました')
       }
