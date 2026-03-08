@@ -54,7 +54,6 @@ export async function redirectToLogin(): Promise<void> {
   const state = generateState()
   const { codeVerifier, codeChallenge } = await generatePkcePair()
 
-  // OAuthリダイレクトをまたぐため、ここだけ sessionStorage を使う
   sessionStorage.setItem('cognito_oauth_state', state)
   sessionStorage.setItem('cognito_code_verifier', codeVerifier)
 
@@ -64,6 +63,7 @@ export async function redirectToLogin(): Promise<void> {
     redirect_uri: redirectUri,
     scope: scopes.join(' '),
     state,
+    prompt: 'login',
     code_challenge_method: 'S256',
     code_challenge: codeChallenge,
   })
