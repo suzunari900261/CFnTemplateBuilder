@@ -48,6 +48,7 @@ export class CognitoConstruct extends Construct {
       cognitoDomain: {
         domainPrefix: props.cognitoDomainPrefix,
       },
+      managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN,
     });
 
     const region = Stack.of(this).region;
