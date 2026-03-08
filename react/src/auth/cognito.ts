@@ -4,7 +4,6 @@ const cognitoDomain =
   'https://cfn-templatebuilder-auth-prod.auth.ap-northeast-1.amazoncognito.com'
 const clientId = '3c67r2of3b5b6tjkqq4tf8m9ls'
 const redirectUri = 'https://d2nn37041udeen.cloudfront.net/callback'
-const logoutUri = 'https://d2nn37041udeen.cloudfront.net/'
 const scopes = ['openid', 'email', 'profile']
 
 const AUTH_STATE_EVENT = 'auth-state-changed'
