@@ -165,6 +165,6 @@ export async function fetchUserInfo(accessToken: string): Promise<{
   }
 }
 
-export function redirectToLogout(): void {
+export function logout(): void {
   clearStoredAuth()
 }
