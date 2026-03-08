@@ -5,7 +5,7 @@ import {
   getStoredAccessToken,
   fetchUserInfo,
   clearStoredAuth,
-  redirectToLogout,
+  logout,
   subscribeAuthState,
 } from './auth/cognito'
 
@@ -63,7 +63,7 @@ export default function App() {
   }
 
   const handleLogout = () => {
-    redirectToLogout()
+    logout()
   }
 
   return (
@@ -77,7 +77,7 @@ export default function App() {
       />
 
       <main>
-        <p className="note">テスト02</p>
+        <p className="note">テスト03</p>
       </main>
     </>
   )
