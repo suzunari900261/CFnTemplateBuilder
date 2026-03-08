@@ -167,11 +167,4 @@ export async function fetchUserInfo(accessToken: string): Promise<{
 
 export function redirectToLogout(): void {
   clearStoredAuth()
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    logout_uri: logoutUri,
-  })
-
-  window.location.assign(`${cognitoDomain}/logout?${params.toString()}`)
 }
