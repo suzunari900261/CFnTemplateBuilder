@@ -6,20 +6,117 @@ body {
                "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   font-size: 16px;
   line-height: 1.8;
-  color: #333;
-  background-color: #f5f6f8;
+  background: #f2f3f3;
+
+  overflow: hidden;
 }
 
-/* 注釈 */
-.note {
-  font-size: 13px;
-  color: #666;
-  margin-top: 16px;
+/* コンテナ配置設定 */
+.aws-service-container-line {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
-/* レイアウト */
-main {
-  max-width: 960px;
-  margin: 32px auto;
-  padding: 0 16px;
+/* コンテナ設定 */
+.aws-service-container {
+  min-height: 100px;
+  border: 2px solid #d5dbdb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+
+  padding: 20px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+
+  text-decoration: none;
+  color: inherit;
+
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.15s ease,
+    border-color 0.2s ease;
+}
+
+.aws-service-container:hover {
+  border: #87cefa solid 2px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+.aws-service-container:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+}
+
+.aws-service-container img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+/* コンテナ内文字設定 */
+.aws-service-container h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #343434;
+  line-height: 1.4;
+}
+
+/* 未使用コンテナ設定 */
+.container-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f7f7f7;
+}
+
+.container-disabled:hover {
+  box-shadow: none;
+  transform: none;
+  border-color: #d5dbdb;
+}
+
+.aws-service-container-disabled h3 {
+  color: #879596;
+}
+
+/* サイドバー動作用 */
+.app-layout {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 50px);
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  background-color: #f9fafb;
+  transition: width 0.3s ease;
+}
+
+/* 狭い画面向け */
+@media (max-width: 900px) {
+  .aws-service-container-line {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .aws-service-container-line {
+    grid-template-columns: 1fr;
+  }
 }

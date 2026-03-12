@@ -1,6 +1,9 @@
+import { Link } from "react-router-dom"
+
 import menuIcon from '../assets/menu.svg'
 import reportIcon from '../assets/report.svg'
 import resetIcon from '../assets/reset.svg'
+import DownloadIcon from '../assets/download.svg'
 import './Header.css'
 
 type HeaderProps = {
@@ -9,6 +12,7 @@ type HeaderProps = {
   isAuthenticated: boolean
   onLoginClick: () => void
   onLogoutClick: () => void
+  onToggleSidebar: () => void
 }
 
 export default function Header({
@@ -17,25 +21,37 @@ export default function Header({
   isAuthenticated,
   onLoginClick,
   onLogoutClick,
+  onToggleSidebar,
 }: HeaderProps) {
   return (
     <header className="site-header">
       <div className="header-components">
         <div className="header-container header-menu">
-          <img src={menuIcon} className="menu-icon" alt="menu" />
+          <img
+            src={menuIcon}
+            className="menu-icon"
+            alt="menu"
+            onClick={onToggleSidebar}
+          />
         </div>
 
         <div className="header-container header-title">
-          <h1>{title}</h1>
+          <Link to="/">
+            <h1>{title}</h1>
+          </Link>
         </div>
 
         <div className="header-container header-actions">
-          <img src={reportIcon} className="report-icon" alt="report" />
           <img src={resetIcon} className="reset-icon" alt="reset" />
+          <img src={reportIcon} className="report-icon" alt="report" />
+          <img src={DownloadIcon} className="download-icon" alt="download" />
         </div>
 
         <div className="header-container header-loginstatus">
-          <p>{username}</p>
+          <div className="header-loginstatus-top">ユーザー名</div>
+          <div className="header-loginstatus-bottom">
+            <p>{username}</p>
+          </div>
         </div>
 
         <div className="header-container header-login">
