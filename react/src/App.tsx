@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Routes, Route } from "react-router-dom"
+import './App.css'
+
 import Header from './components/Header'
+import Sidebar from './components/Sidebar'
+import HomePage from "./pages/main/HomePage"
+import S3Page from "./pages/services/S3Page"
+
 import {
   redirectToLogin,
   getStoredAccessToken,
@@ -9,13 +16,11 @@ import {
   subscribeAuthState,
 } from './auth/cognito'
 
-import './App.css'
-import './components/Header.css'
-
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [username, setUsername] = useState('Guest')
   const [isAuthLoading, setIsAuthLoading] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -30,6 +35,7 @@ export default function App() {
 
       try {
         const userInfo = await fetchUserInfo(accessToken)
+
         const displayName =
           userInfo.preferred_username ||
           userInfo.username ||
@@ -67,6 +73,10 @@ export default function App() {
     alert('ログアウトが完了しました')
   }
 
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev)
+  }
+
   return (
     <>
       <Header
@@ -75,11 +85,19 @@ export default function App() {
         isAuthenticated={isAuthenticated}
         onLoginClick={handleLogin}
         onLogoutClick={handleLogout}
+        onToggleSidebar={handleToggleSidebar}
       />
 
-      <main>
-        <p className="note">テスト03</p>
-      </main>
+      <div className="app-layout">
+        <Sidebar isOpen={isSidebarOpen} />
+
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/services/s3" element={<S3Page />} />
+          </Routes>
+        </main>
+      </div>
     </>
   )
 }
