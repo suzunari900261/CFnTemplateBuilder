@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { FrontendStack } from '../lib/frontend-stack';
+import { AuthStack } from '../lib/auth-stack'
 
 const app = new cdk.App();
 
@@ -10,6 +11,10 @@ const env: cdk.Environment = {
 };
 
 new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
+  env,
+});
+
+new AuthStack(app, 'CFnTemplateBuilder-AuthStack', {
   env,
 });
 
