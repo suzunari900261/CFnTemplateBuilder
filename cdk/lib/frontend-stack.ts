@@ -5,9 +5,12 @@ import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 
 import { S3BucketConstruct } from "./constructs/s3_bucket";
 import { CloudFrontConstruct} from "./constructs/cloudfront";
-import { CognitoConstruct } from "./constructs/cognito";
 
 export class FrontendStack extends Stack {
+  public readonly cloudFrontUrl: string;
+  public readonly cloudFrontDomainName: string;
+  public readonly cloudFrontDistributionId: string;
+
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
@@ -69,15 +72,13 @@ export class FrontendStack extends Stack {
       cloudfrontDistributionArn,
     });
 
-    const userpoolNameWithEnv = `${projectName}-userpool-${environment}`;
+    this.cloudFrontDomainName =
+    cloudfrontResource.distribution.distributionDomainName;
 
-    //Cognito作成
-    const CognitoResource = new CognitoConstruct(this, "CognitoConstruct", {
-      userPoolName: userpoolNameWithEnv,
-      callbackUrls: [`${cloudFrontUrl}/callback`],
-      logoutUrls: [`${cloudFrontUrl}/logout`],
-      cognitoDomainPrefix: `cfn-templatebuilder-auth-${environment}`,
-    });
+    this.cloudFrontUrl = 'https://${this.cloudFrontDomainName}';
+
+    this.cloudFrontDistributionId =
+    cloudfrontResource.distribution.distributionId;
 
     // ------------------------------------------------------------
     // Outputs
