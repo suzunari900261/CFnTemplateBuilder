@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import "./S3Page.css";
+import { useMemo } from "react";
+import { useTemplateBuilder } from "../../contexts/TemplateBuilderProvider";
 
 import S3Icon from "../../assets/AWS/amazon_s3.svg";
 import HelpIcon from "../../assets/help.svg";
@@ -17,6 +17,10 @@ type ViewMode = "form" | "preview";
 type TagItem = {
   key: string;
   value: string;
+};
+
+type AuthProps = {
+  isAuthenticated: boolean;
 };
 
 type BucketFormGroup = {
@@ -112,11 +116,17 @@ function createEmptyGroup(index: number): BucketFormGroup {
   };
 }
 
-export default function S3Page() {
-  const [viewMode, setViewMode] = useState<ViewMode>("form");
-  const [groups, setGroups] = useState<BucketFormGroup[]>([
-    createEmptyGroup(0),
-  ]);
+export default function S3Page({ isAuthenticated }: AuthProps) {
+  const {
+    s3ViewMode: viewMode,
+    setS3ViewMode: setViewMode,
+    s3Groups: groups,
+    setS3Groups: setGroups,
+  } = useTemplateBuilder();
+
+  const guestGroupLimit = 1;
+  const canAddMoreGroups = isAuthenticated || groups.length < guestGroupLimit;
+  const showGuestLimitMessage = !isAuthenticated && groups.length >= guestGroupLimit;
 
   const updateGroupField = <K extends keyof BucketFormGroup>(
     groupId: string,
@@ -225,6 +235,7 @@ export default function S3Page() {
               versioning: true,
               blockPublicAccess: true,
               encryptionType: "SSE-KMS",
+              kmsKeyArn: "",
               lifecycleEnabled: true,
               expirationDays: 365,
               corsEnabled: false,
@@ -240,22 +251,23 @@ export default function S3Page() {
   };
 
   const addGroup = () => {
+    if (!canAddMoreGroups) {
+      window.alert("未認証ユーザーはS3バケット設定を1つまでしか追加できません。");
+      return;
+    }
+
     setGroups((prev) => [...prev, createEmptyGroup(prev.length)]);
   };
 
   const removeGroup = (groupId: string, index: number) => {
-    if (confirm(`バケット${index + 1}の削除を行います。よろしいですか？`)) {
-      setGroups((prev) => {
-        if (prev.length === 1) return prev;
-        return prev.filter((group) => group.id !== groupId);
-      });
-      alert("削除しました");
-    } else {
+    if (window.confirm(`バケット${index + 1}の削除を行います。よろしいですか？`)) {
+      setGroups((prev) => prev.filter((group) => group.id !== groupId));
+      window.alert("削除しました");
     }
   };
 
   const resetGroup = (groupId: string, index: number) => {
-    if (confirm(`バケット${index + 1}を初期値します。よろしいですか？`)) {
+    if (window.confirm(`バケット${index + 1}を初期化します。よろしいですか？`)) {
       setGroups((prev) =>
         prev.map((group) =>
           group.id === groupId
@@ -266,7 +278,7 @@ export default function S3Page() {
             : group
         )
       );
-      alert("リセットしました");
+      window.alert("リセットしました");
     }
   };
 
@@ -314,6 +326,8 @@ export default function S3Page() {
   };
 
   const hasError = useMemo(() => {
+    if (groups.length === 0) return false;
+
     return groups.some((group) => {
       const normalizedBucketId = normalizeBucketId(group.bucketId);
       const normalizedBucketName = normalizeBucketName(group.bucketName);
@@ -381,6 +395,10 @@ export default function S3Page() {
   }, [groups]);
 
   const template = useMemo(() => {
+    if (groups.length === 0) {
+      return "";
+    }
+
     const lines: string[] = [];
     const resources: string[] = [];
     const outputs: string[] = [];
@@ -523,9 +541,9 @@ export default function S3Page() {
       if (group.updatepolicy) {
         resources.push(`    UpdateReplacePolicy: Retain`);
       }
-      
+
       resources.push(`    Type: AWS::S3::Bucket`);
-      resources.push(    );
+      resources.push(`    Properties:`);
       resources.push(...bucketProperties);
 
       if (group.blockPublicAccess) {
@@ -616,6 +634,8 @@ export default function S3Page() {
   }, [groups]);
 
   const handleCopy = async () => {
+    if (!template) return;
+
     try {
       await navigator.clipboard.writeText(template);
       window.alert("テンプレートをコピーしました。");
@@ -624,15 +644,17 @@ export default function S3Page() {
     }
   };
 
+  const isTemplateEmpty = groups.length === 0;
+
   return (
     <main
-      className={`s3-page ${
+      className={`aws-page ${
         viewMode === "preview" ? "preview-mode" : "form-mode"
       }`}
     >
-      <div className="s3-page-top">
-        <div className="s3-page-title">
-          <img src={S3Icon} className="s3-icon" alt="AmazonS3" />
+      <div className="aws-page-top">
+        <div className="aws-page-title">
+          <img src={S3Icon} className="aws-icon" alt="AmazonS3" />
           <h2>Amazon S3</h2>
         </div>
 
@@ -640,7 +662,7 @@ export default function S3Page() {
           type="button"
           className="preview-toggle-button"
           onClick={() =>
-            setViewMode((prev) => (prev === "form" ? "preview" : "form"))
+            setViewMode((prev: ViewMode) => (prev === "form" ? "preview" : "form"))
           }
         >
           {viewMode === "form" ? "プレビュー" : "編集に戻る"}
@@ -649,590 +671,636 @@ export default function S3Page() {
 
       {viewMode === "form" && (
         <>
-          {groups.map((group, index) => {
-            const normalizedBucketId = normalizeBucketId(group.bucketId);
-            const normalizedBucketName = normalizeBucketName(group.bucketName);
+          {groups.length === 0 ? (
+            <div className="form-section empty-state-section">
+              <div className="group-header">
+                <h3>S3バケットはまだ追加されていません</h3>
+              </div>
 
-            const bucketIdError =
-              normalizedBucketId && !isValidCfnLogicalId(normalizedBucketId)
-                ? "CloudFormationの論理IDは英字で始まり、英数字のみ使用できます。"
-                : "";
+              <p>
+                S3テンプレートを作成する場合は「追加」ボタンを押して、
+                バケット設定を作成してください。
+              </p>
 
-            const bucketNameError =
-              normalizedBucketName &&
-              !isValidBucketName(normalizedBucketName)
-                ? "S3バケット名は 3〜63 文字、小文字英数字・ハイフン・ドットのみ使用可能です。"
-                : "";
+              {!isAuthenticated && (
+                <p className="input-error">
+                  未認証ユーザーはS3バケット設定を1つまで追加できます。
+                </p>
+              )}
 
-            const bucketIdDuplicate =
-              normalizedBucketId &&
-              groups.filter(
-                (item) =>
-                  normalizeBucketId(item.bucketId) === normalizedBucketId
-              ).length > 1
-                ? "IDが他のバケットと重複しています。"
-                : "";
+              <button
+                type="button"
+                className="add-group-button"
+                onClick={addGroup}
+                disabled={!canAddMoreGroups}
+              >
+                追加
+              </button>
+            </div>
+          ) : (
+            <>
+              {groups.map((group, index) => {
+                const normalizedBucketId = normalizeBucketId(group.bucketId);
+                const normalizedBucketName = normalizeBucketName(group.bucketName);
 
-            const bucketNameDuplicate =
-              normalizedBucketName &&
-              groups.filter(
-                (item) =>
-                  normalizeBucketName(item.bucketName) === normalizedBucketName
-              ).length > 1
-                ? "バケット名が他のバケットと重複しています。"
-                : "";
+                const bucketIdError =
+                  normalizedBucketId && !isValidCfnLogicalId(normalizedBucketId)
+                    ? "CloudFormationの論理IDは英字で始まり、英数字のみ使用できます。"
+                    : "";
 
-            const kmsKeyError =
-              group.encryptionType === "SSE-KMS" && !group.kmsKeyArn.trim()
-                ? "SSE-KMSを使う場合はKMS Key ARNを入力してください。"
-                : "";
+                const bucketNameError =
+                  normalizedBucketName &&
+                  !isValidBucketName(normalizedBucketName)
+                    ? "S3バケット名は 3〜63 文字、小文字英数字・ハイフン・ドットのみ使用可能です。"
+                    : "";
 
-            const loggingError =
-              group.accessLoggingEnabled && !group.logBucketName.trim()
-                ? "Access Loggingを有効にする場合はログ保存先バケット名が必要です。"
-                : "";
+                const bucketIdDuplicate =
+                  normalizedBucketId &&
+                  groups.filter(
+                    (item) =>
+                      normalizeBucketId(item.bucketId) === normalizedBucketId
+                  ).length > 1
+                    ? "IDが他のバケットと重複しています。"
+                    : "";
 
-            return (
-              <div className="form-section" key={group.id}>
-                <div className="group-header">
-                  <h3>バケット {index + 1}</h3>
-                  <div className="group-header-button">
-                    {index !== 0 && (
-                      <button
-                        type="button"
-                        className="remove-group-button"
-                        onClick={() => removeGroup(group.id, index)}
-                        disabled={groups.length === 1}
-                      >
-                        削除
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="remove-group-button"
-                      onClick={() => resetGroup(group.id, index)}
-                    >
-                      リセット
-                    </button>
-                  </div>
-                </div>
+                const bucketNameDuplicate =
+                  normalizedBucketName &&
+                  groups.filter(
+                    (item) =>
+                      normalizeBucketName(item.bucketName) === normalizedBucketName
+                  ).length > 1
+                    ? "バケット名が他のバケットと重複しています。"
+                    : "";
 
-                <div className="form-group">
-                  <div className="usecase-header">
-                    <label htmlFor={`useCase-${group.id}`}>用途プリセット</label>
-                    <button
-                      type="button"
-                      className="help-icon-button"
-                      onClick={() =>
-                        updateGroupField(
-                          group.id,
-                          "isUseCaseHelpOpen",
-                          !group.isUseCaseHelpOpen
-                        )
-                      }
-                      aria-label="用途プリセットの説明を表示"
-                    >
-                      <img src={HelpIcon} className="help-icon" alt="" />
-                    </button>
-                  </div>
+                const kmsKeyError =
+                  group.encryptionType === "SSE-KMS" && !group.kmsKeyArn.trim()
+                    ? "SSE-KMSを使う場合はKMS Key ARNを入力してください。"
+                    : "";
 
-                  {group.isUseCaseHelpOpen && (
-                    <div className="help-panel">
-                      <div className="help-panel-item">
-                        <strong>汎用バケット</strong>
-                        <p>標準的なS3バケット向けの基本構成です。</p>
-                      </div>
-                      <div className="help-panel-item">
-                        <strong>CloudFront オリジン用</strong>
-                        <p>CloudFront から配信する前提の構成です。</p>
-                      </div>
-                      <div className="help-panel-item">
-                        <strong>静的ウェブサイト公開用</strong>
-                        <p>S3 の静的ウェブサイト公開に使う用途向けです。</p>
-                      </div>
-                      <div className="help-panel-item">
-                        <strong>ログ保存用</strong>
-                        <p>アクセスログや監査ログの保管向けです。</p>
-                      </div>
-                      <div className="help-panel-item">
-                        <strong>バックアップ保存用</strong>
-                        <p>バックアップデータの安全な保管向けです。</p>
-                      </div>
-                    </div>
-                  )}
+                const loggingError =
+                  group.accessLoggingEnabled && !group.logBucketName.trim()
+                    ? "Access Loggingを有効にする場合はログ保存先バケット名が必要です。"
+                    : "";
 
-                  <select
-                    id={`useCase-${group.id}`}
-                    value={group.useCase}
-                    onChange={(e) =>
-                      applyPreset(group.id, e.target.value as UseCase)
-                    }
-                  >
-                    <option value="general">汎用バケット</option>
-                    <option value="cloudfront">CloudFront オリジン用</option>
-                    <option value="static-website">静的ウェブサイト公開用</option>
-                    <option value="logging">ログ保存用</option>
-                    <option value="backup">バックアップ保存用</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor={`bucketId-${group.id}`}>ID</label>
-                  <input
-                    id={`bucketId-${group.id}`}
-                    type="text"
-                    value={group.bucketId}
-                    onChange={(e) =>
-                      updateGroupField(group.id, "bucketId", e.target.value)
-                    }
-                    placeholder="S3Bucket01"
-                  />
-                  {bucketIdError && <p className="input-error">{bucketIdError}</p>}
-                  {bucketIdDuplicate && (
-                    <p className="input-error">{bucketIdDuplicate}</p>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor={`bucketName-${group.id}`}>バケット名</label>
-                  <input
-                    id={`bucketName-${group.id}`}
-                    type="text"
-                    value={group.bucketName}
-                    onChange={(e) =>
-                      updateGroupField(group.id, "bucketName", e.target.value)
-                    }
-                    placeholder="example-app-assets-prod"
-                  />
-                  {bucketNameError && (
-                    <p className="input-error">{bucketNameError}</p>
-                  )}
-                  {bucketNameDuplicate && (
-                    <p className="input-error">{bucketNameDuplicate}</p>
-                  )}
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                    />
-                    DeletionPolicy
-                  </label>
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                    />
-                    UpdatePolicy
-                  </label>
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.versioning}
-                      onChange={(e) =>
-                        updateGroupField(group.id, "versioning", e.target.checked)
-                      }
-                    />
-                    バージョニング有効化
-                  </label>
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.blockPublicAccess}
-                      onChange={(e) =>
-                        updateGroupField(
-                          group.id,
-                          "blockPublicAccess",
-                          e.target.checked
-                        )
-                      }
-                    />
-                    パブリックアクセスブロック有効化
-                  </label>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor={`encryptionType-${group.id}`}>暗号化方式</label>
-                  <select
-                    id={`encryptionType-${group.id}`}
-                    value={group.encryptionType}
-                    onChange={(e) =>
-                      updateGroupField(
-                        group.id,
-                        "encryptionType",
-                        e.target.value as EncryptionType
-                      )
-                    }
-                  >
-                    <option value="SSE-S3">SSE-S3</option>
-                    <option value="SSE-KMS">SSE-KMS</option>
-                    <option value="NONE">None</option>
-                  </select>
-                </div>
-
-                {group.encryptionType === "SSE-KMS" && (
-                  <div className="form-group">
-                    <label htmlFor={`kmsKeyArn-${group.id}`}>KMS Key ARN</label>
-                    <input
-                      id={`kmsKeyArn-${group.id}`}
-                      type="text"
-                      value={group.kmsKeyArn}
-                      onChange={(e) =>
-                        updateGroupField(group.id, "kmsKeyArn", e.target.value)
-                      }
-                      placeholder="arn:aws:kms:ap-northeast-1:123456789012:key/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    />
-                    {kmsKeyError && <p className="input-error">{kmsKeyError}</p>}
-                  </div>
-                )}
-
-                <div className="form-group">
-                  <label>Tags</label>
-                  <div className="tag-list">
-                    {group.tags.map((tag, tagIndex) => (
-                      <div
-                        className="tag-row"
-                        key={`${group.id}-${tagIndex}-${tag.key}-${tag.value}`}
-                      >
-                        <input
-                          type="text"
-                          value={tag.key}
-                          placeholder="Key"
-                          onChange={(e) =>
-                            updateTag(group.id, tagIndex, "key", e.target.value)
-                          }
-                        />
-                        <input
-                          type="text"
-                          value={tag.value}
-                          placeholder="Value"
-                          onChange={(e) =>
-                            updateTag(group.id, tagIndex, "value", e.target.value)
-                          }
-                        />
+                return (
+                  <div className="form-section" key={group.id}>
+                    <div className="group-header">
+                      <h3>バケット {index + 1}</h3>
+                      <div className="group-header-button">
                         <button
                           type="button"
-                          onClick={() => removeTag(group.id, tagIndex)}
+                          className="remove-group-button"
+                          onClick={() => removeGroup(group.id, index)}
                         >
                           削除
                         </button>
+                        <button
+                          type="button"
+                          className="remove-group-button"
+                          onClick={() => resetGroup(group.id, index)}
+                        >
+                          リセット
+                        </button>
                       </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    className="add-tag-button"
-                    onClick={() => addTag(group.id)}
-                  >
-                    Tag追加
-                  </button>
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.lifecycleEnabled}
-                      onChange={(e) =>
-                        updateGroupField(
-                          group.id,
-                          "lifecycleEnabled",
-                          e.target.checked
-                        )
-                      }
-                    />
-                    ライフサイクル有効化
-                  </label>
-                </div>
-
-                {group.lifecycleEnabled && (
-                  <div className="form-group">
-                    <label htmlFor={`expirationDays-${group.id}`}>
-                      Expiration Days
-                    </label>
-                    <input
-                      id={`expirationDays-${group.id}`}
-                      type="number"
-                      min={1}
-                      value={group.expirationDays}
-                      onChange={(e) =>
-                        updateGroupField(
-                          group.id,
-                          "expirationDays",
-                          Number(e.target.value)
-                        )
-                      }
-                    />
-                  </div>
-                )}
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.corsEnabled}
-                      onChange={(e) =>
-                        updateGroupField(group.id, "corsEnabled", e.target.checked)
-                      }
-                    />
-                    CORS有効化
-                  </label>
-                </div>
-
-                {group.corsEnabled && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor={`corsAllowedOrigins-${group.id}`}>
-                        Allowed Origins
-                      </label>
-                      <input
-                        id={`corsAllowedOrigins-${group.id}`}
-                        type="text"
-                        value={group.corsAllowedOrigins}
-                        onChange={(e) =>
-                          updateGroupField(
-                            group.id,
-                            "corsAllowedOrigins",
-                            e.target.value
-                          )
-                        }
-                        placeholder="*, https://example.com"
-                      />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor={`corsAllowedMethods-${group.id}`}>
-                        Allowed Methods
-                      </label>
-                      <input
-                        id={`corsAllowedMethods-${group.id}`}
-                        type="text"
-                        value={group.corsAllowedMethods}
+                      <div className="usecase-header">
+                        <label htmlFor={`useCase-${group.id}`}>用途プリセット</label>
+                        <button
+                          type="button"
+                          className="help-icon-button"
+                          onClick={() =>
+                            updateGroupField(
+                              group.id,
+                              "isUseCaseHelpOpen",
+                              !group.isUseCaseHelpOpen
+                            )
+                          }
+                          aria-label="用途プリセットの説明を表示"
+                        >
+                          <img src={HelpIcon} className="help-icon" alt="" />
+                        </button>
+                      </div>
+
+                      {group.isUseCaseHelpOpen && (
+                        <div className="help-panel">
+                          <div className="help-panel-item">
+                            <strong>汎用バケット</strong>
+                            <p>標準的なS3バケット向けの基本構成です。</p>
+                          </div>
+                          <div className="help-panel-item">
+                            <strong>CloudFront オリジン用</strong>
+                            <p>CloudFront から配信する前提の構成です。</p>
+                          </div>
+                          <div className="help-panel-item">
+                            <strong>静的ウェブサイト公開用</strong>
+                            <p>S3 の静的ウェブサイト公開に使う用途向けです。</p>
+                          </div>
+                          <div className="help-panel-item">
+                            <strong>ログ保存用</strong>
+                            <p>アクセスログや監査ログの保管向けです。</p>
+                          </div>
+                          <div className="help-panel-item">
+                            <strong>バックアップ保存用</strong>
+                            <p>バックアップデータの安全な保管向けです。</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <select
+                        id={`useCase-${group.id}`}
+                        value={group.useCase}
                         onChange={(e) =>
-                          updateGroupField(
-                            group.id,
-                            "corsAllowedMethods",
-                            e.target.value
-                          )
+                          applyPreset(group.id, e.target.value as UseCase)
                         }
-                        placeholder="GET,HEAD,PUT,POST"
-                      />
+                      >
+                        <option value="general">汎用バケット</option>
+                        <option value="cloudfront">CloudFront オリジン用</option>
+                        <option value="static-website">静的ウェブサイト公開用</option>
+                        <option value="logging">ログ保存用</option>
+                        <option value="backup">バックアップ保存用</option>
+                      </select>
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor={`corsAllowedHeaders-${group.id}`}>
-                        Allowed Headers
-                      </label>
+                      <label htmlFor={`bucketId-${group.id}`}>ID</label>
                       <input
-                        id={`corsAllowedHeaders-${group.id}`}
+                        id={`bucketId-${group.id}`}
                         type="text"
-                        value={group.corsAllowedHeaders}
+                        value={group.bucketId}
                         onChange={(e) =>
-                          updateGroupField(
-                            group.id,
-                            "corsAllowedHeaders",
-                            e.target.value
-                          )
+                          updateGroupField(group.id, "bucketId", e.target.value)
                         }
-                        placeholder="*"
+                        placeholder="S3Bucket01"
                       />
-                    </div>
-                  </>
-                )}
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.accessLoggingEnabled}
-                      onChange={(e) =>
-                        updateGroupField(
-                          group.id,
-                          "accessLoggingEnabled",
-                          e.target.checked
-                        )
-                      }
-                    />
-                    Access Logging有効化
-                  </label>
-                </div>
-
-                {group.accessLoggingEnabled && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor={`logBucketName-${group.id}`}>
-                        Log Bucket Name
-                      </label>
-                      <input
-                        id={`logBucketName-${group.id}`}
-                        type="text"
-                        value={group.logBucketName}
-                        onChange={(e) =>
-                          updateGroupField(group.id, "logBucketName", e.target.value)
-                        }
-                        placeholder="example-log-bucket"
-                      />
-                      {loggingError && (
-                        <p className="input-error">{loggingError}</p>
+                      {bucketIdError && <p className="input-error">{bucketIdError}</p>}
+                      {bucketIdDuplicate && (
+                        <p className="input-error">{bucketIdDuplicate}</p>
                       )}
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor={`logPrefix-${group.id}`}>Log Prefix</label>
+                      <label htmlFor={`bucketName-${group.id}`}>バケット名</label>
                       <input
-                        id={`logPrefix-${group.id}`}
+                        id={`bucketName-${group.id}`}
                         type="text"
-                        value={group.logPrefix}
+                        value={group.bucketName}
                         onChange={(e) =>
-                          updateGroupField(group.id, "logPrefix", e.target.value)
+                          updateGroupField(group.id, "bucketName", e.target.value)
                         }
-                        placeholder="s3-access-logs/"
+                        placeholder="example-app-assets-prod"
                       />
-                    </div>
-                  </>
-                )}
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.websiteHostingEnabled}
-                      onChange={(e) =>
-                        updateGroupField(
-                          group.id,
-                          "websiteHostingEnabled",
-                          e.target.checked
-                        )
-                      }
-                    />
-                    Static Website Hosting有効化
-                  </label>
-                </div>
-
-                {group.websiteHostingEnabled && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor={`indexDocument-${group.id}`}>
-                        Index Document
-                      </label>
-                      <input
-                        id={`indexDocument-${group.id}`}
-                        type="text"
-                        value={group.indexDocument}
-                        onChange={(e) =>
-                          updateGroupField(
-                            group.id,
-                            "indexDocument",
-                            e.target.value
-                          )
-                        }
-                        placeholder="index.html"
-                      />
+                      {bucketNameError && (
+                        <p className="input-error">{bucketNameError}</p>
+                      )}
+                      {bucketNameDuplicate && (
+                        <p className="input-error">{bucketNameDuplicate}</p>
+                      )}
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor={`errorDocument-${group.id}`}>
-                        Error Document
-                      </label>
-                      <input
-                        id={`errorDocument-${group.id}`}
-                        type="text"
-                        value={group.errorDocument}
-                        onChange={(e) =>
-                          updateGroupField(
-                            group.id,
-                            "errorDocument",
-                            e.target.value
-                          )
-                        }
-                        placeholder="error.html"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="form-group checkbox-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={group.createBucketPolicy}
-                      onChange={(e) =>
-                        updateGroupField(
-                          group.id,
-                          "createBucketPolicy",
-                          e.target.checked
-                        )
-                      }
-                    />
-                    Bucket Policy生成
-                  </label>
-                </div>
-
-                {group.createBucketPolicy && (
-                  <>
                     <div className="form-group checkbox-group">
                       <label>
                         <input
                           type="checkbox"
-                          checked={group.allowCloudFrontReadOnly}
+                          checked={group.deletepolicy}
+                          onChange={(e) =>
+                            updateGroupField(group.id, "deletepolicy", e.target.checked)
+                          }
+                        />
+                        DeletionPolicy
+                      </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.updatepolicy}
+                          onChange={(e) =>
+                            updateGroupField(group.id, "updatepolicy", e.target.checked)
+                          }
+                        />
+                        UpdateReplacePolicy
+                      </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.versioning}
+                          onChange={(e) =>
+                            updateGroupField(group.id, "versioning", e.target.checked)
+                          }
+                        />
+                        バージョニング有効化
+                      </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.blockPublicAccess}
                           onChange={(e) =>
                             updateGroupField(
                               group.id,
-                              "allowCloudFrontReadOnly",
+                              "blockPublicAccess",
                               e.target.checked
                             )
                           }
                         />
-                        CloudFront ReadOnly許可サンプルを追加
+                        パブリックアクセスブロック有効化
                       </label>
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor={`allowedPrincipalArn-${group.id}`}>
-                        Allowed Principal ARN
-                      </label>
-                      <input
-                        id={`allowedPrincipalArn-${group.id}`}
-                        type="text"
-                        value={group.allowedPrincipalArn}
+                      <label htmlFor={`encryptionType-${group.id}`}>暗号化方式</label>
+                      <select
+                        id={`encryptionType-${group.id}`}
+                        value={group.encryptionType}
                         onChange={(e) =>
                           updateGroupField(
                             group.id,
-                            "allowedPrincipalArn",
-                            e.target.value
+                            "encryptionType",
+                            e.target.value as EncryptionType
                           )
                         }
-                        placeholder="arn:aws:iam::123456789012:role/ExampleRole"
-                      />
+                      >
+                        <option value="SSE-S3">SSE-S3</option>
+                        <option value="SSE-KMS">SSE-KMS</option>
+                        <option value="NONE">None</option>
+                      </select>
                     </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
 
-          {warningMessages.length > 0 && (
-            <div className="warning-section">
-              <h3>Warning</h3>
-              {warningMessages.map((message, index) => (
-                <p key={`${index}-${message}`}>{message}</p>
-              ))}
-            </div>
+                    {group.encryptionType === "SSE-KMS" && (
+                      <div className="form-group">
+                        <label htmlFor={`kmsKeyArn-${group.id}`}>KMS Key ARN</label>
+                        <input
+                          id={`kmsKeyArn-${group.id}`}
+                          type="text"
+                          value={group.kmsKeyArn}
+                          onChange={(e) =>
+                            updateGroupField(group.id, "kmsKeyArn", e.target.value)
+                          }
+                          placeholder="arn:aws:kms:ap-northeast-1:123456789012:key/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                        />
+                        {kmsKeyError && <p className="input-error">{kmsKeyError}</p>}
+                      </div>
+                    )}
+
+                    <div className="form-group">
+                      <label>Tags</label>
+                      <div className="tag-list">
+                        {group.tags.map((tag, tagIndex) => (
+                          <div
+                            className="tag-row"
+                            key={`${group.id}-${tagIndex}-${tag.key}-${tag.value}`}
+                          >
+                            <input
+                              type="text"
+                              value={tag.key}
+                              placeholder="Key"
+                              onChange={(e) =>
+                                updateTag(group.id, tagIndex, "key", e.target.value)
+                              }
+                            />
+                            <input
+                              type="text"
+                              value={tag.value}
+                              placeholder="Value"
+                              onChange={(e) =>
+                                updateTag(group.id, tagIndex, "value", e.target.value)
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeTag(group.id, tagIndex)}
+                            >
+                              削除
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="add-tag-button"
+                        onClick={() => addTag(group.id)}
+                      >
+                        Tag追加
+                      </button>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.lifecycleEnabled}
+                          onChange={(e) =>
+                            updateGroupField(
+                              group.id,
+                              "lifecycleEnabled",
+                              e.target.checked
+                            )
+                          }
+                        />
+                        ライフサイクル有効化
+                      </label>
+                    </div>
+
+                    {group.lifecycleEnabled && (
+                      <div className="form-group">
+                        <label htmlFor={`expirationDays-${group.id}`}>
+                          Expiration Days
+                        </label>
+                        <input
+                          id={`expirationDays-${group.id}`}
+                          type="number"
+                          min={1}
+                          value={group.expirationDays}
+                          onChange={(e) =>
+                            updateGroupField(
+                              group.id,
+                              "expirationDays",
+                              Number(e.target.value)
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.corsEnabled}
+                          onChange={(e) =>
+                            updateGroupField(group.id, "corsEnabled", e.target.checked)
+                          }
+                        />
+                        CORS有効化
+                      </label>
+                    </div>
+
+                    {group.corsEnabled && (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor={`corsAllowedOrigins-${group.id}`}>
+                            Allowed Origins
+                          </label>
+                          <input
+                            id={`corsAllowedOrigins-${group.id}`}
+                            type="text"
+                            value={group.corsAllowedOrigins}
+                            onChange={(e) =>
+                              updateGroupField(
+                                group.id,
+                                "corsAllowedOrigins",
+                                e.target.value
+                              )
+                            }
+                            placeholder="*, https://example.com"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`corsAllowedMethods-${group.id}`}>
+                            Allowed Methods
+                          </label>
+                          <input
+                            id={`corsAllowedMethods-${group.id}`}
+                            type="text"
+                            value={group.corsAllowedMethods}
+                            onChange={(e) =>
+                              updateGroupField(
+                                group.id,
+                                "corsAllowedMethods",
+                                e.target.value
+                              )
+                            }
+                            placeholder="GET,HEAD,PUT,POST"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`corsAllowedHeaders-${group.id}`}>
+                            Allowed Headers
+                          </label>
+                          <input
+                            id={`corsAllowedHeaders-${group.id}`}
+                            type="text"
+                            value={group.corsAllowedHeaders}
+                            onChange={(e) =>
+                              updateGroupField(
+                                group.id,
+                                "corsAllowedHeaders",
+                                e.target.value
+                              )
+                            }
+                            placeholder="*"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.accessLoggingEnabled}
+                          onChange={(e) =>
+                            updateGroupField(
+                              group.id,
+                              "accessLoggingEnabled",
+                              e.target.checked
+                            )
+                          }
+                        />
+                        Access Logging有効化
+                      </label>
+                    </div>
+
+                    {group.accessLoggingEnabled && (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor={`logBucketName-${group.id}`}>
+                            Log Bucket Name
+                          </label>
+                          <input
+                            id={`logBucketName-${group.id}`}
+                            type="text"
+                            value={group.logBucketName}
+                            onChange={(e) =>
+                              updateGroupField(group.id, "logBucketName", e.target.value)
+                            }
+                            placeholder="example-log-bucket"
+                          />
+                          {loggingError && (
+                            <p className="input-error">{loggingError}</p>
+                          )}
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`logPrefix-${group.id}`}>Log Prefix</label>
+                          <input
+                            id={`logPrefix-${group.id}`}
+                            type="text"
+                            value={group.logPrefix}
+                            onChange={(e) =>
+                              updateGroupField(group.id, "logPrefix", e.target.value)
+                            }
+                            placeholder="s3-access-logs/"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.websiteHostingEnabled}
+                          onChange={(e) =>
+                            updateGroupField(
+                              group.id,
+                              "websiteHostingEnabled",
+                              e.target.checked
+                            )
+                          }
+                        />
+                        Static Website Hosting有効化
+                      </label>
+                    </div>
+
+                    {group.websiteHostingEnabled && (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor={`indexDocument-${group.id}`}>
+                            Index Document
+                          </label>
+                          <input
+                            id={`indexDocument-${group.id}`}
+                            type="text"
+                            value={group.indexDocument}
+                            onChange={(e) =>
+                              updateGroupField(
+                                group.id,
+                                "indexDocument",
+                                e.target.value
+                              )
+                            }
+                            placeholder="index.html"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`errorDocument-${group.id}`}>
+                            Error Document
+                          </label>
+                          <input
+                            id={`errorDocument-${group.id}`}
+                            type="text"
+                            value={group.errorDocument}
+                            onChange={(e) =>
+                              updateGroupField(
+                                group.id,
+                                "errorDocument",
+                                e.target.value
+                              )
+                            }
+                            placeholder="error.html"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={group.createBucketPolicy}
+                          onChange={(e) =>
+                            updateGroupField(
+                              group.id,
+                              "createBucketPolicy",
+                              e.target.checked
+                            )
+                          }
+                        />
+                        Bucket Policy生成
+                      </label>
+                    </div>
+
+                    {group.createBucketPolicy && (
+                      <>
+                        <div className="form-group checkbox-group">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={group.allowCloudFrontReadOnly}
+                              onChange={(e) =>
+                                updateGroupField(
+                                  group.id,
+                                  "allowCloudFrontReadOnly",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                            CloudFront ReadOnly許可サンプルを追加
+                          </label>
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`allowedPrincipalArn-${group.id}`}>
+                            Allowed Principal ARN
+                          </label>
+                          <input
+                            id={`allowedPrincipalArn-${group.id}`}
+                            type="text"
+                            value={group.allowedPrincipalArn}
+                            onChange={(e) =>
+                              updateGroupField(
+                                group.id,
+                                "allowedPrincipalArn",
+                                e.target.value
+                              )
+                            }
+                            placeholder="arn:aws:iam::123456789012:role/ExampleRole"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+
+              {warningMessages.length > 0 && (
+                <div className="warning-section">
+                  <h3>Warning</h3>
+                  {warningMessages.map((message, index) => (
+                    <p key={`${index}-${message}`}>{message}</p>
+                  ))}
+                </div>
+              )}
+
+              {showGuestLimitMessage && (
+                <p className="input-error">
+                  未認証ユーザーはS3バケット設定を1つまでしか追加できません。
+                </p>
+              )}
+
+              <button
+                type="button"
+                className="add-group-button"
+                onClick={addGroup}
+                disabled={!canAddMoreGroups}
+              >
+                追加
+              </button>
+            </>
           )}
-
-          <button type="button" className="add-group-button" onClick={addGroup}>
-            追加
-          </button>
         </>
       )}
 
@@ -1240,17 +1308,35 @@ export default function S3Page() {
         <div className="preview-section">
           <div className="preview-section-header">
             <h3>Generated CloudFormation Template</h3>
-            <button type="button" onClick={handleCopy} disabled={hasError}>
-              Copy
-            </button>
+            <div>
+              <button type="button" disabled={hasError || isTemplateEmpty}>
+                Download
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopy}
+                disabled={hasError || isTemplateEmpty}
+              >
+                Copy
+              </button>
+            </div>
           </div>
 
-          <textarea value={template} readOnly rows={36} />
-
-          {hasError && (
-            <p className="input-error">
-              入力エラーがあるため、そのままでは実運用向けテンプレートとして使えません。
+          {isTemplateEmpty ? (
+            <p className="empty-preview-message">
+              No Template
             </p>
+          ) : (
+            <>
+              <textarea value={template} readOnly rows={36} />
+
+              {hasError && (
+                <p className="input-error">
+                  入力エラーがあるため、そのままでは実運用向けテンプレートとして使えません。
+                </p>
+              )}
+            </>
           )}
         </div>
       )}

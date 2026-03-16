@@ -1,4 +1,4 @@
-.s3-page {
+.aws-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 32px 24px 48px;
@@ -9,7 +9,7 @@
   box-sizing: border-box;
 }
 
-.s3-page-top {
+.aws-page-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -17,13 +17,13 @@
   margin-bottom: 4px;
 }
 
-.s3-page-title {
+.aws-page-title {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.s3-page-top h2 {
+.aws-page-top h2 {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
@@ -36,7 +36,7 @@
   justify-content: space-between;
 }
 
-.s3-icon {
+.aws-icon {
   width: 40px;
   height: 40px;
   object-fit: contain;
@@ -368,28 +368,28 @@ button:disabled {
 }
 
 /* 表示モードごとの微調整 */
-.s3-page.form-mode .form-section,
-.s3-page.form-mode .warning-section,
-.s3-page.preview-mode .preview-section {
+.aws-page.form-mode .form-section,
+.aws-page.form-mode .warning-section,
+.aws-page.preview-mode .preview-section {
   display: block;
 }
 
 @media (max-width: 768px) {
-  .s3-page {
+  .aws-page {
     padding: 20px 16px 32px;
     gap: 16px;
   }
 
-  .s3-page-top {
+  .aws-page-top {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .s3-page-title {
+  .aws-page-title {
     align-items: center;
   }
 
-  .s3-page-top h2 {
+  .aws-page-top h2 {
     font-size: 24px;
   }
 

@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom"
 
-import menuIcon from '../assets/menu.svg'
-import reportIcon from '../assets/report.svg'
-import resetIcon from '../assets/reset.svg'
-import DownloadIcon from '../assets/download.svg'
-import './Header.css'
+import menuIcon from "../assets/menu.svg"
+import reportIcon from "../assets/report.svg"
+import resetIcon from "../assets/reset.svg"
+import DownloadIcon from "../assets/download.svg"
+import "./Header.css"
 
 type HeaderProps = {
   title: string
@@ -23,6 +23,8 @@ export default function Header({
   onLogoutClick,
   onToggleSidebar,
 }: HeaderProps) {
+  const guestMessage = "Guestユーザーでは使用できません"
+
   return (
     <header className="site-header">
       <div className="header-components">
@@ -42,9 +44,24 @@ export default function Header({
         </div>
 
         <div className="header-container header-actions">
-          <img src={resetIcon} className="reset-icon" alt="reset" />
-          <img src={reportIcon} className="report-icon" alt="report" />
-          <img src={DownloadIcon} className="download-icon" alt="download" />
+          <img
+            src={resetIcon}
+            className={`reset-icon ${!isAuthenticated ? "disabled-action" : ""}`}
+            alt="reset"
+            title={!isAuthenticated ? guestMessage : ""}
+          />
+          <img
+            src={reportIcon}
+            className={`report-icon ${!isAuthenticated ? "disabled-action" : ""}`}
+            alt="report"
+            title={!isAuthenticated ? guestMessage : ""}
+          />
+          <img
+            src={DownloadIcon}
+            className={`download-icon ${!isAuthenticated ? "disabled-action" : ""}`}
+            alt="download"
+            title={!isAuthenticated ? guestMessage : ""}
+          />
         </div>
 
         <div className="header-container header-loginstatus">

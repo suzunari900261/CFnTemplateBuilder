@@ -108,6 +108,11 @@ body {
   transition: width 0.3s ease;
 }
 
+.guest-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* 狭い画面向け */
 @media (max-width: 900px) {
   .aws-service-container-line {

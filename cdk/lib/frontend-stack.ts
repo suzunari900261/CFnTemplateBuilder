@@ -1,5 +1,5 @@
 import * as cdk from "aws-cdk-lib";
-import { CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
+import { CfnOutput, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 

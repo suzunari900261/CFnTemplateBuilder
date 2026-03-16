@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route } from "react-router-dom"
 import './App.css'
+import './pages/services/AWS-Services-Page.css'
 
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import HomePage from "./pages/main/HomePage"
 import S3Page from "./pages/services/S3Page"
+import CloudFrontPage from "./pages/services/CloudFrontPage"
 
 import {
   redirectToLogin,
@@ -95,6 +97,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/services/s3" element={<S3Page />} />
+            <Route path="/services/cloudfront" element={<CloudFrontPage />} />
           </Routes>
         </main>
       </div>
