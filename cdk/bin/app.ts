@@ -10,12 +10,16 @@ const env: cdk.Environment = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 
-new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
+const frontendStack = new FrontendStack(app, 'CFnTemplateBuilder-FrontendStack', {
   env,
 });
 
 new AuthStack(app, 'CFnTemplateBuilder-AuthStack', {
   env,
+  projectName: process.env.PROJECT_NAME!,
+  environment: process.env.ENVIRONMENT!,
+  callbackUrls: [`${frontendStack.cloudFrontUrl}/callback`],
+  logoutUrls: [`${frontendStack.cloudFrontUrl}/logout`],
 });
 
 app.synth();
