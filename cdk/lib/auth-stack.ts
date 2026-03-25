@@ -12,7 +12,7 @@ interface AuthStackProps extends StackProps {
 }
 
 export class AuthStack extends Stack {
-  constructor(scope: Construct, id: string, props?: AuthStackProps) {
+  constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
 
     Tags.of(this).add("Project", props.projectName);

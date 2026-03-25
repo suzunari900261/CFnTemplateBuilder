@@ -75,7 +75,7 @@ export class FrontendStack extends Stack {
     this.cloudFrontDomainName =
     cloudfrontResource.distribution.distributionDomainName;
 
-    this.cloudFrontUrl = 'https://${this.cloudFrontDomainName}';
+    this.cloudFrontUrl = `https://${this.cloudFrontDomainName}`;
 
     this.cloudFrontDistributionId =
     cloudfrontResource.distribution.distributionId;
@@ -97,18 +97,6 @@ export class FrontendStack extends Stack {
 
     new CfnOutput(this, "CloudFrontUrl", {
       value: `https://${cloudfrontResource.distribution.distributionDomainName}`,
-    });
-
-    new CfnOutput(this, "UserPoolId", {
-      value: CognitoResource.userPool.userPoolId,
-    });
-
-    new CfnOutput(this, "UserPoolClientId", {
-      value: CognitoResource.userPoolClient.userPoolClientId,
-    });
-
-    new CfnOutput(this, "IssuerUrl", {
-      value: CognitoResource.issuerUrl
     });
   }
 }
