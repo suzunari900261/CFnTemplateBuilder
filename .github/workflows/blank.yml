@@ -28,10 +28,10 @@ jobs: #ジョブ確認
     defaults:
       run:
         working-directory: cdk #/cdkディレクトリ内
-      env:
-        PROJECT_NAME: ${{ vars.PROJECT_NAME }}
-        ENVIRONMENT: ${{ vars.ENVIRONMENT }}
-        S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME}}
+    env:
+      PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+      ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+      S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME}}
 
     steps:
       #ソースコード取得
