@@ -95,7 +95,7 @@ export default function App() {
 
         <main className="app-main">
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomePage isAuthenticated={isAuthenticated} />} />
             <Route path="/services/s3" element={<S3Page />} />
             <Route path="/services/cloudfront" element={<CloudFrontPage />} />
           </Routes>
