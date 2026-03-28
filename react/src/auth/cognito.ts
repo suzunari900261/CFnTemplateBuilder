@@ -1,7 +1,7 @@
 import { generatePkcePair } from './pkce'
 
 const cognitoDomain =
-  'https://cfn-templatebuilder-auth-prod.auth.ap-northeast-1.amazoncognito.com'
+  'https://cfn-template-builder-auth-prod.auth.ap-northeast-1.amazoncognito.com'
 const clientId = '6qvrmd22c1vs92ihdvlovb5dgd'
 const redirectUri = 'https://d2nn37041udeen.cloudfront.net/callback'
 const scopes = ['openid', 'email', 'profile']
