@@ -102,7 +102,7 @@ export default function App() {
                 />
             <Route
               path="/services/cloudfront"
-              element={<CloudFrontPage isAuthenticated={isAuthenticated} />}
+              element={<CloudFrontPage />}
             />
           </Routes>
         </main>
