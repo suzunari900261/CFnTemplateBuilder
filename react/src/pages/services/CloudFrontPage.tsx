@@ -582,7 +582,7 @@ export default function CloudFrontPage() {
       const shouldUseLinkedS3GetAtt =
         group.originType === "s3" &&
         Boolean(linkedS3Bucket?.bucketId) &&
-        !linkedS3Bucket.websiteHostingEnabled;
+        !linkedS3Bucket?.websiteHostingEnabled;
 
       if (group.createOac && group.originType === "s3") {
         resources.push(`  ${resolvedOacId}:`);
