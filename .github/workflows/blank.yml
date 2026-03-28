@@ -22,9 +22,9 @@ concurrency: #同時デプロイ防止
   cancel-in-progress: false #実行中があればキャンセルせず待機
 
 jobs: #ジョブ確認
-  runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
   diff: #CDKのテスト・差分確認ジョブ
-  environment: ${{ inputs.target_env }}
+    runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
+    environment: ${{ inputs.target_env }}
     defaults:
       run:
         working-directory: cdk #/cdkディレクトリ内
