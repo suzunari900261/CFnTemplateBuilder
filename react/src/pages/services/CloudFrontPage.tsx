@@ -241,7 +241,7 @@ export default function CloudFrontPage() {
 
   const selectableS3Buckets = useMemo<SelectableS3Bucket[]>(() => {
     return s3Groups
-      .map((group) => {
+      .map((group): SelectableS3Bucket => {
         const bucketId = typeof group.bucketId === "string" ? group.bucketId.trim() : "";
         const bucketName =
           typeof group.bucketName === "string" ? group.bucketName.trim() : "";
