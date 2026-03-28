@@ -3,21 +3,36 @@ name: CDKDeploy
 
 on:
   workflow_dispatch: #手動実行
+    inputs:
+      target_env:
+        description: Deploy target environment
+        required: true
+        default: production
+        type: choice
+        options:
+          - dev
+          - production
 
 permissions: #権限
   id-token: write #OIDCトークン(JWT)発行権限
   contents: read #リポジトリの中身を読み取る権限
 
 concurrency: #同時デプロイ防止
-  group: deploy #グループ名
+  group: deploy-${{ inputs.target_env }} #グループ名
   cancel-in-progress: false #実行中があればキャンセルせず待機
 
 jobs: #ジョブ確認
+  runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
   diff: #CDKのテスト・差分確認ジョブ
-    runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
+  environment: ${{ inputs.target_env }}
     defaults:
       run:
         working-directory: cdk #/cdkディレクトリ内
+      env:
+        PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+        ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+        S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME}}
+
     steps:
       #ソースコード取得
       - uses: actions/checkout@v4
@@ -43,20 +58,20 @@ jobs: #ジョブ確認
 
       #現在のスタックとデプロイ後の差分を表示
       - name: CDK Diff
-        env:
-          PROJECT_NAME: ${{ vars.PROJECT_NAME }}
-          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
-          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
         run: |
-          npx cdk diff CFnTemplateBuilder-FrontendStack
+          npx cdk diff CFnTemplateBuilder-FrontendStack CFnTemplateBuilder-AuthStack
 
   deploy: #AWS関係へCDKスタックをデプロイするジョブ
     needs: diff #diffジョブ成功後にのみ実行
     runs-on: ubuntu-latest #GitHub管理のUbuntu環境で実行
-    environment: production #GitHubのproduction環境に紐付け(手動承認)
+    environment: ${{ inputs.target_env }} #GitHubのproduction環境に紐付け(手動承認)
     defaults:
       run:
         working-directory: cdk #/cdkディレクトリ内
+    env:
+      PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+      ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+      S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
 
     steps:
       #ソースコードを取得
@@ -82,10 +97,6 @@ jobs: #ジョブ確認
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy
-        env: #リポジトリ変数
-          PROJECT_NAME: ${{ vars.PROJECT_NAME }}
-          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
-          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
         run: |
-          npx cdk deploy CFnTemplateBuilder-FrontendStack \
+          npx cdk deploy CFnTemplateBuilder-FrontendStack CFnTemplateBuilder-AuthStack \
             --require-approval never
